@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import argparse
-import csv
 import json
 import os
 import re
@@ -30,10 +29,9 @@ def parse_args() -> argparse.Namespace:
 
 
 def load_kernel_version_ids(stage_dir: Path) -> set[str]:
-    path = stage_dir / "nodes_kernel_version.csv"
-    with path.open(newline="", encoding="utf-8") as handle:
-        reader = csv.DictReader(handle)
-        return {row["Id"] for row in reader}
+    path = stage_dir / "nodes_kernel_version.parquet"
+    df = pl.read_parquet(path, columns=["Id"])
+    return set(df["Id"].cast(pl.Utf8))
 
 
 def candidate_paths(code_dir: Path, kernel_version_id: str) -> list[Path]:
@@ -102,10 +100,10 @@ def main() -> None:
     imports = imports.unique().sort(["KernelVersionId", "Library"])
 
     libraries = imports.select(pl.col("Library").alias("Id")).unique().sort("Id")
-    libraries.write_csv(args.stage_dir / "nodes_library.csv")
+    libraries.write_parquet(args.stage_dir / "nodes_library.parquet")
     imports.rename(
         {"KernelVersionId": "from_kernel_version_id", "Library": "to_library_id"}
-    ).write_csv(args.stage_dir / "edges_kernel_version_imports_library.csv")
+    ).write_parquet(args.stage_dir / "edges_kernel_version_imports_library.parquet")
     print(f"Wrote {imports.height} import edges and {libraries.height} libraries")
 
 

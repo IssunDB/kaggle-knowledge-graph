@@ -11,7 +11,7 @@ import duckdb
 DEFAULT_META_DIR = Path(
     os.environ.get("META_KAGGLE_DIR", "/media/data/home/downloads/KW/meta-kaggle")
 )
-DEFAULT_OUTPUT = Path("tmp/metadata_inventory.md")
+DEFAULT_OUTPUT = Path("databases/metadata_inventory.md")
 
 
 def parse_args() -> argparse.Namespace:

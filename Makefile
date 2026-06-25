@@ -10,10 +10,11 @@ KERNEL_LIMIT ?= 10000
 NEO4J_COMPOSE ?= deploy/neo4j-compose.yml
 
 # Competition knowledge graph (post-2020 real competitions) build settings
-COMP_STAGE_DIR ?= issundb/stage_competition
-COMP_DB ?= issundb/competition-kg
+COMP_STAGE_DIR ?= databases/staging_data
+COMP_DB ?= databases/comp-kg
 KERNELS_PER_COMPETITION ?= 50
-ISSUNDB_CLI ?= tmp/issundb-cli
+ISSUNDB_CLI ?= bin/issundb-cli
+ISSUNDB_MCP ?= bin/issundb-mcp
 MAP_SIZE_GB ?= 8
 
 # Directories and files to clean
@@ -39,7 +40,7 @@ setup: ## Install system dependencies and dependency manager
 
 .PHONY: install
 install: ## Install Python dependencies
-	(DEP_MNGR) sync --all-extras # --upgrade
+	$(DEP_MNGR) sync --all-extras # --upgrade
 
 # Quality and Testing
 .PHONY: test
@@ -124,12 +125,16 @@ comp-load: ## Load the staged competition subset, add constraints and indexes, a
 	.venv/bin/python scripts/load_competition_kg.py --stage-dir "$(COMP_STAGE_DIR)" --db "$(COMP_DB)" --cli "$(ISSUNDB_CLI)" --map-size-gb $(MAP_SIZE_GB)
 
 .PHONY: graph-kc
-graph-kc: comp-stage comp-parse-imports comp-load ## Build the competition knowledge graph end to end into $(COMP_DB)
-	@echo "competition-kg ready at $(COMP_DB)"
+graph-kc: kg-inspect comp-stage comp-parse-imports comp-load ## Build the competition knowledge graph end to end into $(COMP_DB)
+	@echo "comp-kg ready at $(COMP_DB)"
 
 .PHONY: comp-cli
 comp-cli: ## Open the competition knowledge graph in the IssunDB CLI
 	$(ISSUNDB_CLI) --map-size-gb $(MAP_SIZE_GB) $(COMP_DB)
+
+.PHONY: comp-mcp
+comp-mcp: ## Run the IssunDB MCP server for the competition knowledge graph
+	$(ISSUNDB_MCP) --db-path $(COMP_DB) --map-size-gb $(MAP_SIZE_GB)
 
 .PHONY: neo4j-up
 neo4j-up: ## Start Neo4j with stage/ mounted as /import

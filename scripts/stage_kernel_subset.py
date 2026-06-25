@@ -31,9 +31,9 @@ def csv(meta_dir: Path, name: str) -> str:
     return f"read_csv_auto({sql_literal(meta_dir / name)}, max_line_size=16000000)"
 
 
-def copy_csv(con: duckdb.DuckDBPyConnection, query: str, output: Path) -> None:
+def copy_parquet(con: duckdb.DuckDBPyConnection, query: str, output: Path) -> None:
     output.parent.mkdir(parents=True, exist_ok=True)
-    con.execute(f"COPY ({query}) TO {sql_literal(output)} (HEADER, DELIMITER ',')")
+    con.execute(f"COPY ({query}) TO {sql_literal(output)} (FORMAT PARQUET)")
 
 
 def create_seed_tables(con: duckdb.DuckDBPyConnection, meta_dir: Path, kernel_limit: int) -> None:
@@ -122,25 +122,25 @@ def create_seed_tables(con: duckdb.DuckDBPyConnection, meta_dir: Path, kernel_li
 def stage_nodes(
     con: duckdb.DuckDBPyConnection, meta_dir: Path, stage_dir: Path, include_text: bool
 ) -> None:
-    copy_csv(
+    copy_parquet(
         con,
         """
         SELECT Id, AuthorUserId, CurrentKernelVersionId, FirstKernelVersionId, ForumTopicId,
                CreationDate, EvaluationDate, MadePublicDate, Medal, TotalViews, TotalComments, TotalVotes, CurrentUrlSlug
         FROM seed_kernels
         """,
-        stage_dir / "nodes_kernel.csv",
+        stage_dir / "nodes_kernel.parquet",
     )
-    copy_csv(
+    copy_parquet(
         con,
         """
         SELECT Id, ScriptId, VersionNumber, replace(Title, '"', chr(39)) AS Title, CreationDate, TotalLines, TotalVotes,
                IsInternetEnabled, RunningTimeInMilliseconds, DockerImage, AuthorUserId
         FROM seed_kernel_versions
         """,
-        stage_dir / "nodes_kernel_version.csv",
+        stage_dir / "nodes_kernel_version.parquet",
     )
-    copy_csv(
+    copy_parquet(
         con,
         f"""
         SELECT u.Id AS Id, replace(UserName, '"', chr(39)) AS UserName, replace(DisplayName, '"', chr(39)) AS DisplayName,
@@ -148,9 +148,9 @@ def stage_nodes(
         FROM {csv(meta_dir, "Users.csv")} u
         JOIN seed_user_ids s ON u.Id = s.Id
         """,
-        stage_dir / "nodes_user.csv",
+        stage_dir / "nodes_user.parquet",
     )
-    copy_csv(
+    copy_parquet(
         con,
         f"""
         SELECT d.Id AS Id, CreatorUserId, OwnerUserId, OwnerOrganizationId, CurrentDatasetVersionId,
@@ -158,9 +158,9 @@ def stage_nodes(
         FROM {csv(meta_dir, "Datasets.csv")} d
         JOIN seed_dataset_ids s ON d.Id = s.Id
         """,
-        stage_dir / "nodes_dataset.csv",
+        stage_dir / "nodes_dataset.parquet",
     )
-    copy_csv(
+    copy_parquet(
         con,
         """
         SELECT Id, DatasetId, CreatorUserId, LicenseName, CreationDate, VersionNumber,
@@ -168,9 +168,9 @@ def stage_nodes(
                TotalCompressedBytes, TotalUncompressedBytes
         FROM seed_dataset_versions
         """,
-        stage_dir / "nodes_dataset_version.csv",
+        stage_dir / "nodes_dataset_version.parquet",
     )
-    copy_csv(
+    copy_parquet(
         con,
         """
         SELECT Id, Slug, replace(Title, '"', chr(39)) AS Title, replace(Subtitle, '"', chr(39)) AS Subtitle,
@@ -179,18 +179,18 @@ def stage_nodes(
                TotalTeams, TotalCompetitors, TotalSubmissions
         FROM seed_competitions
         """,
-        stage_dir / "nodes_competition.csv",
+        stage_dir / "nodes_competition.parquet",
     )
-    copy_csv(
+    copy_parquet(
         con,
         f"""
         SELECT Id, ParentTagId, replace(Name, '"', chr(39)) AS Name, Slug, FullPath,
                replace(Description, '"', chr(39)) AS Description
         FROM {csv(meta_dir, "Tags.csv")}
         """,
-        stage_dir / "nodes_tag.csv",
+        stage_dir / "nodes_tag.parquet",
     )
-    copy_csv(
+    copy_parquet(
         con,
         f"""
         SELECT DISTINCT f.Id AS Id, ParentForumId, replace(Title, '"', chr(39)) AS Title
@@ -201,16 +201,16 @@ def stage_nodes(
             SELECT ForumId FROM seed_forum_topics WHERE ForumId IS NOT NULL
         )
         """,
-        stage_dir / "nodes_forum.csv",
+        stage_dir / "nodes_forum.parquet",
     )
-    copy_csv(
+    copy_parquet(
         con,
         """
         SELECT Id, ForumId, KernelId, CreationDate, LastCommentDate, replace(Title, '"', chr(39)) AS Title,
                IsSticky, TotalViews, Score, TotalMessages, TotalReplies
         FROM seed_forum_topics
         """,
-        stage_dir / "nodes_forum_topic.csv",
+        stage_dir / "nodes_forum_topic.parquet",
     )
 
     if include_text:
@@ -227,56 +227,56 @@ def stage_nodes(
                    Medal, MedalAwardDate
             FROM seed_forum_messages
         """
-    copy_csv(con, message_query, stage_dir / "nodes_forum_message.csv")
+    copy_parquet(con, message_query, stage_dir / "nodes_forum_message.parquet")
 
 
 def stage_edges(con: duckdb.DuckDBPyConnection, meta_dir: Path, stage_dir: Path) -> None:
-    copy_csv(
+    copy_parquet(
         con,
         """
         SELECT AuthorUserId AS from_user_id, Id AS to_kernel_id
         FROM seed_kernels
         WHERE AuthorUserId IS NOT NULL
         """,
-        stage_dir / "edges_user_authored_kernel.csv",
+        stage_dir / "edges_user_authored_kernel.parquet",
     )
-    copy_csv(
+    copy_parquet(
         con,
         """
         SELECT ScriptId AS from_kernel_id, Id AS to_kernel_version_id
         FROM seed_kernel_versions
         WHERE ScriptId IS NOT NULL
         """,
-        stage_dir / "edges_kernel_has_version.csv",
+        stage_dir / "edges_kernel_has_version.parquet",
     )
-    copy_csv(
+    copy_parquet(
         con,
         """
         SELECT Id AS from_kernel_id, CurrentKernelVersionId AS to_kernel_version_id
         FROM seed_kernels
         WHERE CurrentKernelVersionId IS NOT NULL
         """,
-        stage_dir / "edges_kernel_current_version.csv",
+        stage_dir / "edges_kernel_current_version.parquet",
     )
-    copy_csv(
+    copy_parquet(
         con,
         """
         SELECT Id AS from_kernel_id, FirstKernelVersionId AS to_kernel_version_id
         FROM seed_kernels
         WHERE FirstKernelVersionId IS NOT NULL
         """,
-        stage_dir / "edges_kernel_first_version.csv",
+        stage_dir / "edges_kernel_first_version.parquet",
     )
-    copy_csv(
+    copy_parquet(
         con,
         """
         SELECT Id AS from_kernel_version_id, AuthorUserId AS to_user_id
         FROM seed_kernel_versions
         WHERE AuthorUserId IS NOT NULL
         """,
-        stage_dir / "edges_kernel_version_authored_by_user.csv",
+        stage_dir / "edges_kernel_version_authored_by_user.parquet",
     )
-    copy_csv(
+    copy_parquet(
         con,
         f"""
         SELECT src.KernelVersionId AS from_kernel_version_id,
@@ -285,18 +285,18 @@ def stage_edges(con: duckdb.DuckDBPyConnection, meta_dir: Path, stage_dir: Path)
         JOIN seed_kernel_versions kv ON kv.Id = src.KernelVersionId
         JOIN seed_dataset_versions dv ON dv.Id = src.SourceDatasetVersionId
         """,
-        stage_dir / "edges_kernel_version_uses_dataset_version.csv",
+        stage_dir / "edges_kernel_version_uses_dataset_version.parquet",
     )
-    copy_csv(
+    copy_parquet(
         con,
         """
         SELECT DatasetId AS from_dataset_id, Id AS to_dataset_version_id
         FROM seed_dataset_versions
         WHERE DatasetId IS NOT NULL
         """,
-        stage_dir / "edges_dataset_has_version.csv",
+        stage_dir / "edges_dataset_has_version.parquet",
     )
-    copy_csv(
+    copy_parquet(
         con,
         f"""
         SELECT d.Id AS from_dataset_id, d.CurrentDatasetVersionId AS to_dataset_version_id
@@ -304,9 +304,9 @@ def stage_edges(con: duckdb.DuckDBPyConnection, meta_dir: Path, stage_dir: Path)
         JOIN seed_dataset_ids s ON d.Id = s.Id
         JOIN seed_dataset_versions dv ON dv.Id = d.CurrentDatasetVersionId
         """,
-        stage_dir / "edges_dataset_current_version.csv",
+        stage_dir / "edges_dataset_current_version.parquet",
     )
-    copy_csv(
+    copy_parquet(
         con,
         f"""
         SELECT src.KernelVersionId AS from_kernel_version_id,
@@ -315,81 +315,81 @@ def stage_edges(con: duckdb.DuckDBPyConnection, meta_dir: Path, stage_dir: Path)
         JOIN seed_kernel_versions kv ON kv.Id = src.KernelVersionId
         JOIN seed_competitions c ON c.Id = src.SourceCompetitionId
         """,
-        stage_dir / "edges_kernel_version_uses_competition.csv",
+        stage_dir / "edges_kernel_version_uses_competition.parquet",
     )
-    copy_csv(
+    copy_parquet(
         con,
         f"""
         SELECT kt.KernelId AS from_kernel_id, kt.TagId AS to_tag_id
         FROM {csv(meta_dir, "KernelTags.csv")} kt
         JOIN seed_kernels k ON k.Id = kt.KernelId
         """,
-        stage_dir / "edges_kernel_tagged_with_tag.csv",
+        stage_dir / "edges_kernel_tagged_with_tag.parquet",
     )
-    copy_csv(
+    copy_parquet(
         con,
         f"""
         SELECT dt.DatasetId AS from_dataset_id, dt.TagId AS to_tag_id
         FROM {csv(meta_dir, "DatasetTags.csv")} dt
         JOIN seed_dataset_ids d ON d.Id = dt.DatasetId
         """,
-        stage_dir / "edges_dataset_tagged_with_tag.csv",
+        stage_dir / "edges_dataset_tagged_with_tag.parquet",
     )
-    copy_csv(
+    copy_parquet(
         con,
         f"""
         SELECT ct.CompetitionId AS from_competition_id, ct.TagId AS to_tag_id
         FROM {csv(meta_dir, "CompetitionTags.csv")} ct
         JOIN seed_competitions c ON c.Id = ct.CompetitionId
         """,
-        stage_dir / "edges_competition_tagged_with_tag.csv",
+        stage_dir / "edges_competition_tagged_with_tag.parquet",
     )
-    copy_csv(
+    copy_parquet(
         con,
         """
         SELECT Id AS from_competition_id, ForumId AS to_forum_id
         FROM seed_competitions
         WHERE ForumId IS NOT NULL
         """,
-        stage_dir / "edges_competition_has_forum.csv",
+        stage_dir / "edges_competition_has_forum.parquet",
     )
-    copy_csv(
+    copy_parquet(
         con,
         """
         SELECT ForumId AS from_forum_id, Id AS to_forum_topic_id
         FROM seed_forum_topics
         WHERE ForumId IS NOT NULL
         """,
-        stage_dir / "edges_forum_has_topic.csv",
+        stage_dir / "edges_forum_has_topic.parquet",
     )
-    copy_csv(
+    copy_parquet(
         con,
         """
         SELECT KernelId AS from_kernel_id, Id AS to_forum_topic_id
         FROM seed_forum_topics
         WHERE KernelId IS NOT NULL
         """,
-        stage_dir / "edges_kernel_has_forum_topic.csv",
+        stage_dir / "edges_kernel_has_forum_topic.parquet",
     )
-    copy_csv(
+    copy_parquet(
         con,
         """
         SELECT ForumTopicId AS from_forum_topic_id, Id AS to_forum_message_id
         FROM seed_forum_messages
         WHERE ForumTopicId IS NOT NULL
         """,
-        stage_dir / "edges_forum_topic_has_message.csv",
+        stage_dir / "edges_forum_topic_has_message.parquet",
     )
-    copy_csv(
+    copy_parquet(
         con,
         """
         SELECT PostUserId AS from_user_id, Id AS to_forum_message_id
         FROM seed_forum_messages
         WHERE PostUserId IS NOT NULL
         """,
-        stage_dir / "edges_user_posted_message.csv",
+        stage_dir / "edges_user_posted_message.parquet",
     )
-    copy_csv(
+    copy_parquet(
         con,
         """
         SELECT Id AS from_forum_message_id,
@@ -399,7 +399,7 @@ def stage_edges(con: duckdb.DuckDBPyConnection, meta_dir: Path, stage_dir: Path)
             SELECT Id FROM seed_forum_messages
         )
         """,
-        stage_dir / "edges_forum_message_replies_to.csv",
+        stage_dir / "edges_forum_message_replies_to.parquet",
     )
 
 

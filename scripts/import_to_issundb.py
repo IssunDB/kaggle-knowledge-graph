@@ -1,4 +1,7 @@
-"""Import Meta Kaggle staged nodes and edges into IssunDB via the :import-nodes and :import-edges commands."""
+"""Import Meta Kaggle staged nodes and edges into IssunDB.
+
+Use the :import-nodes and :import-edges commands to load the data.
+"""
 
 from __future__ import annotations
 
@@ -7,31 +10,31 @@ import time
 from pathlib import Path
 
 # Paths relative to workspace root
-STAGE_DIR = Path("issundb/stage")
-DB_PATH = Path("issundb/issundb-data")
-CLI_PATH = Path("tmp/issundb-cli")
-SCRIPT_PATH = Path("issundb/import.issun")
-LOG_PATH = Path("issundb/import.log")
+STAGE_DIR = Path("databases/stage")
+DB_PATH = Path("databases/issundb-data")
+CLI_PATH = Path("bin/issundb-cli")
+SCRIPT_PATH = Path("databases/import.issun")
+LOG_PATH = Path("databases/import.log")
 
 # Node files and their labels
 node_files = [
-    ("nodes_user.csv", "User"),
-    ("nodes_kernel.csv", "Kernel"),
-    ("nodes_kernel_version.csv", "KernelVersion"),
-    ("nodes_dataset.csv", "Dataset"),
-    ("nodes_dataset_version.csv", "DatasetVersion"),
-    ("nodes_competition.csv", "Competition"),
-    ("nodes_tag.csv", "Tag"),
-    ("nodes_library.csv", "Library"),
-    ("nodes_forum.csv", "Forum"),
-    ("nodes_forum_topic.csv", "ForumTopic"),
-    ("nodes_forum_message.csv", "ForumMessage"),
+    ("nodes_user.parquet", "User"),
+    ("nodes_kernel.parquet", "Kernel"),
+    ("nodes_kernel_version.parquet", "KernelVersion"),
+    ("nodes_dataset.parquet", "Dataset"),
+    ("nodes_dataset_version.parquet", "DatasetVersion"),
+    ("nodes_competition.parquet", "Competition"),
+    ("nodes_tag.parquet", "Tag"),
+    ("nodes_library.parquet", "Library"),
+    ("nodes_forum.parquet", "Forum"),
+    ("nodes_forum_topic.parquet", "ForumTopic"),
+    ("nodes_forum_message.parquet", "ForumMessage"),
 ]
 
 # Edge files, their labels, and their relationship types
 edge_files = [
     (
-        "edges_user_authored_kernel.csv",
+        "edges_user_authored_kernel.parquet",
         "User",
         "Kernel",
         "AUTHORED_KERNEL",
@@ -39,7 +42,7 @@ edge_files = [
         "to_kernel_id",
     ),
     (
-        "edges_kernel_has_version.csv",
+        "edges_kernel_has_version.parquet",
         "Kernel",
         "KernelVersion",
         "HAS_VERSION",
@@ -47,7 +50,7 @@ edge_files = [
         "to_kernel_version_id",
     ),
     (
-        "edges_kernel_current_version.csv",
+        "edges_kernel_current_version.parquet",
         "Kernel",
         "KernelVersion",
         "CURRENT_VERSION",
@@ -55,7 +58,7 @@ edge_files = [
         "to_kernel_version_id",
     ),
     (
-        "edges_kernel_first_version.csv",
+        "edges_kernel_first_version.parquet",
         "Kernel",
         "KernelVersion",
         "FIRST_VERSION",
@@ -63,7 +66,7 @@ edge_files = [
         "to_kernel_version_id",
     ),
     (
-        "edges_kernel_version_authored_by_user.csv",
+        "edges_kernel_version_authored_by_user.parquet",
         "KernelVersion",
         "User",
         "AUTHORED_BY",
@@ -71,7 +74,7 @@ edge_files = [
         "to_user_id",
     ),
     (
-        "edges_kernel_version_imports_library.csv",
+        "edges_kernel_version_imports_library.parquet",
         "KernelVersion",
         "Library",
         "IMPORTS",
@@ -79,7 +82,7 @@ edge_files = [
         "to_library_id",
     ),
     (
-        "edges_kernel_version_uses_dataset_version.csv",
+        "edges_kernel_version_uses_dataset_version.parquet",
         "KernelVersion",
         "DatasetVersion",
         "USES_DATASET_VERSION",
@@ -87,7 +90,7 @@ edge_files = [
         "to_dataset_version_id",
     ),
     (
-        "edges_dataset_has_version.csv",
+        "edges_dataset_has_version.parquet",
         "Dataset",
         "DatasetVersion",
         "HAS_VERSION",
@@ -95,7 +98,7 @@ edge_files = [
         "to_dataset_version_id",
     ),
     (
-        "edges_dataset_current_version.csv",
+        "edges_dataset_current_version.parquet",
         "Dataset",
         "DatasetVersion",
         "CURRENT_VERSION",
@@ -103,7 +106,7 @@ edge_files = [
         "to_dataset_version_id",
     ),
     (
-        "edges_kernel_version_uses_competition.csv",
+        "edges_kernel_version_uses_competition.parquet",
         "KernelVersion",
         "Competition",
         "USES_COMPETITION",
@@ -111,7 +114,7 @@ edge_files = [
         "to_competition_id",
     ),
     (
-        "edges_kernel_tagged_with_tag.csv",
+        "edges_kernel_tagged_with_tag.parquet",
         "Kernel",
         "Tag",
         "TAGGED_WITH",
@@ -119,7 +122,7 @@ edge_files = [
         "to_tag_id",
     ),
     (
-        "edges_dataset_tagged_with_tag.csv",
+        "edges_dataset_tagged_with_tag.parquet",
         "Dataset",
         "Tag",
         "TAGGED_WITH",
@@ -127,7 +130,7 @@ edge_files = [
         "to_tag_id",
     ),
     (
-        "edges_competition_tagged_with_tag.csv",
+        "edges_competition_tagged_with_tag.parquet",
         "Competition",
         "Tag",
         "TAGGED_WITH",
@@ -135,7 +138,7 @@ edge_files = [
         "to_tag_id",
     ),
     (
-        "edges_competition_has_forum.csv",
+        "edges_competition_has_forum.parquet",
         "Competition",
         "Forum",
         "HAS_FORUM",
@@ -143,7 +146,7 @@ edge_files = [
         "to_forum_id",
     ),
     (
-        "edges_forum_has_topic.csv",
+        "edges_forum_has_topic.parquet",
         "Forum",
         "ForumTopic",
         "HAS_TOPIC",
@@ -151,7 +154,7 @@ edge_files = [
         "to_forum_topic_id",
     ),
     (
-        "edges_kernel_has_forum_topic.csv",
+        "edges_kernel_has_forum_topic.parquet",
         "Kernel",
         "ForumTopic",
         "HAS_FORUM_TOPIC",
@@ -159,7 +162,7 @@ edge_files = [
         "to_forum_topic_id",
     ),
     (
-        "edges_forum_topic_has_message.csv",
+        "edges_forum_topic_has_message.parquet",
         "ForumTopic",
         "ForumMessage",
         "HAS_MESSAGE",
@@ -167,7 +170,7 @@ edge_files = [
         "to_forum_message_id",
     ),
     (
-        "edges_user_posted_message.csv",
+        "edges_user_posted_message.parquet",
         "User",
         "ForumMessage",
         "POSTED_MESSAGE",
@@ -175,7 +178,7 @@ edge_files = [
         "to_forum_message_id",
     ),
     (
-        "edges_forum_message_replies_to.csv",
+        "edges_forum_message_replies_to.parquet",
         "ForumMessage",
         "ForumMessage",
         "REPLIES_TO",
@@ -245,9 +248,9 @@ def main() -> None:
         process.wait()
     end_time = time.time()
 
-    print(
-        f"Import process finished in {end_time - start_time:.2f} seconds. Logs written to {LOG_PATH.resolve()}"
-    )
+    elapsed = end_time - start_time
+    print(f"Import finished in {elapsed:.2f} seconds.")
+    print(f"Logs are written to {LOG_PATH.resolve()}")
 
 
 if __name__ == "__main__":

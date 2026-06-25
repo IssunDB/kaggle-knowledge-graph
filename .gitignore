@@ -88,3 +88,6 @@ site/
 *.csv
 *.issun
 *.log
+bin/
+databases/metadata_inventory.md
+*.parquet

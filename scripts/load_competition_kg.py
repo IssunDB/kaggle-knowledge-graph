@@ -27,62 +27,62 @@ from pathlib import Path
 # Node CSV file names and the label each file's rows carry. Loaded before edges
 # so the edge importer can resolve endpoints by the auto-indexed `Id` property.
 NODE_FILES: list[tuple[str, str]] = [
-    ("nodes_competition.csv", "Competition"),
-    ("nodes_team.csv", "Team"),
-    ("nodes_user.csv", "User"),
-    ("nodes_submission.csv", "Submission"),
-    ("nodes_kernel.csv", "Kernel"),
-    ("nodes_kernel_version.csv", "KernelVersion"),
-    ("nodes_tag.csv", "Tag"),
-    ("nodes_forum.csv", "Forum"),
-    ("nodes_forum_topic.csv", "ForumTopic"),
-    ("nodes_forum_message.csv", "ForumMessage"),
-    ("nodes_library.csv", "Library"),
+    ("nodes_competition.parquet", "Competition"),
+    ("nodes_team.parquet", "Team"),
+    ("nodes_user.parquet", "User"),
+    ("nodes_submission.parquet", "Submission"),
+    ("nodes_kernel.parquet", "Kernel"),
+    ("nodes_kernel_version.parquet", "KernelVersion"),
+    ("nodes_tag.parquet", "Tag"),
+    ("nodes_forum.parquet", "Forum"),
+    ("nodes_forum_topic.parquet", "ForumTopic"),
+    ("nodes_forum_message.parquet", "ForumMessage"),
+    ("nodes_library.parquet", "Library"),
 ]
 
 # Edge CSV file names with their source label, destination label, and type.
 EDGE_FILES: list[tuple[str, str, str, str]] = [
-    ("edges_team_competed_in_competition.csv", "Team", "Competition", "COMPETED_IN"),
-    ("edges_user_member_of_team.csv", "User", "Team", "MEMBER_OF_TEAM"),
-    ("edges_user_led_team.csv", "User", "Team", "LED_TEAM"),
-    ("edges_submission_for_team.csv", "Submission", "Team", "FOR_TEAM"),
-    ("edges_user_submitted.csv", "User", "Submission", "SUBMITTED"),
+    ("edges_team_competed_in_competition.parquet", "Team", "Competition", "COMPETED_IN"),
+    ("edges_user_member_of_team.parquet", "User", "Team", "MEMBER_OF_TEAM"),
+    ("edges_user_led_team.parquet", "User", "Team", "LED_TEAM"),
+    ("edges_submission_for_team.parquet", "Submission", "Team", "FOR_TEAM"),
+    ("edges_user_submitted.parquet", "User", "Submission", "SUBMITTED"),
     (
-        "edges_submission_from_kernel_version.csv",
+        "edges_submission_from_kernel_version.parquet",
         "Submission",
         "KernelVersion",
         "FROM_KERNEL_VERSION",
     ),
     (
-        "edges_team_public_leaderboard_submission.csv",
+        "edges_team_public_leaderboard_submission.parquet",
         "Team",
         "Submission",
         "PUBLIC_LEADERBOARD_SUBMISSION",
     ),
     (
-        "edges_team_private_leaderboard_submission.csv",
+        "edges_team_private_leaderboard_submission.parquet",
         "Team",
         "Submission",
         "PRIVATE_LEADERBOARD_SUBMISSION",
     ),
-    ("edges_user_authored_kernel.csv", "User", "Kernel", "AUTHORED_KERNEL"),
-    ("edges_kernel_has_version.csv", "Kernel", "KernelVersion", "HAS_VERSION"),
-    ("edges_kernel_current_version.csv", "Kernel", "KernelVersion", "CURRENT_VERSION"),
-    ("edges_kernel_version_authored_by_user.csv", "KernelVersion", "User", "AUTHORED_BY"),
+    ("edges_user_authored_kernel.parquet", "User", "Kernel", "AUTHORED_KERNEL"),
+    ("edges_kernel_has_version.parquet", "Kernel", "KernelVersion", "HAS_VERSION"),
+    ("edges_kernel_current_version.parquet", "Kernel", "KernelVersion", "CURRENT_VERSION"),
+    ("edges_kernel_version_authored_by_user.parquet", "KernelVersion", "User", "AUTHORED_BY"),
     (
-        "edges_kernel_version_uses_competition.csv",
+        "edges_kernel_version_uses_competition.parquet",
         "KernelVersion",
         "Competition",
         "USES_COMPETITION",
     ),
-    ("edges_kernel_version_imports_library.csv", "KernelVersion", "Library", "IMPORTS"),
-    ("edges_kernel_tagged_with_tag.csv", "Kernel", "Tag", "TAGGED_WITH"),
-    ("edges_competition_tagged_with_tag.csv", "Competition", "Tag", "TAGGED_WITH"),
-    ("edges_competition_has_forum.csv", "Competition", "Forum", "HAS_FORUM"),
-    ("edges_forum_has_topic.csv", "Forum", "ForumTopic", "HAS_TOPIC"),
-    ("edges_forum_topic_has_message.csv", "ForumTopic", "ForumMessage", "HAS_MESSAGE"),
-    ("edges_user_posted_message.csv", "User", "ForumMessage", "POSTED_MESSAGE"),
-    ("edges_forum_message_replies_to.csv", "ForumMessage", "ForumMessage", "REPLIES_TO"),
+    ("edges_kernel_version_imports_library.parquet", "KernelVersion", "Library", "IMPORTS"),
+    ("edges_kernel_tagged_with_tag.parquet", "Kernel", "Tag", "TAGGED_WITH"),
+    ("edges_competition_tagged_with_tag.parquet", "Competition", "Tag", "TAGGED_WITH"),
+    ("edges_competition_has_forum.parquet", "Competition", "Forum", "HAS_FORUM"),
+    ("edges_forum_has_topic.parquet", "Forum", "ForumTopic", "HAS_TOPIC"),
+    ("edges_forum_topic_has_message.parquet", "ForumTopic", "ForumMessage", "HAS_MESSAGE"),
+    ("edges_user_posted_message.parquet", "User", "ForumMessage", "POSTED_MESSAGE"),
+    ("edges_forum_message_replies_to.parquet", "ForumMessage", "ForumMessage", "REPLIES_TO"),
 ]
 
 # Full-text indexes on short, clean text fields. ForumMessage.Message is omitted
@@ -103,30 +103,30 @@ EDGE_LINE = re.compile(
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--stage-dir", type=Path, default=Path("issundb/stage_competition"))
-    parser.add_argument("--db", type=Path, default=Path("issundb/competition-kg"))
-    parser.add_argument("--cli", type=Path, default=Path("tmp/issundb-cli"))
+    parser.add_argument("--stage-dir", type=Path, default=Path("databases/staging_data"))
+    parser.add_argument("--db", type=Path, default=Path("databases/comp-kg"))
+    parser.add_argument("--cli", type=Path, default=Path("bin/issundb-cli"))
     parser.add_argument("--map-size-gb", type=int, default=8)
     parser.add_argument(
         "--script",
         type=Path,
-        default=Path("issundb/load_competition_kg.issun"),
+        default=Path("databases/load_competition_kg.issun"),
         help="Path the generated CLI script is written to.",
     )
     parser.add_argument(
         "--log",
         type=Path,
-        default=Path("issundb/load_competition_kg.log"),
+        default=Path("databases/load_competition_kg.log"),
         help="Path the CLI output is captured to.",
     )
     return parser.parse_args()
 
 
 def count_data_rows(path: Path) -> int:
-    """Count CSV rows excluding the header."""
-    with path.open("rb") as handle:
-        total = sum(1 for _ in handle)
-    return max(total - 1, 0)
+    """Count Parquet rows."""
+    import polars as pl
+
+    return pl.scan_parquet(path).select(pl.len()).collect().item()
 
 
 def build_script(stage_dir: Path) -> tuple[str, dict[str, int]]:
@@ -191,7 +191,7 @@ def validate(log_text: str, expected_nodes: dict[str, int]) -> list[str]:
         if total != expected:
             failures.append(f"{filename}: imported {total} nodes, expected {expected} staged rows")
 
-    for imported, etype, path, _unresolved, malformed in EDGE_LINE.findall(log_text):
+    for _imported, _etype, path, _unresolved, malformed in EDGE_LINE.findall(log_text):
         if int(malformed) != 0:
             failures.append(f"{Path(path).name}: {malformed} malformed edge row(s)")
 
