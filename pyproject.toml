@@ -7,26 +7,26 @@ dependencies = [
     "duckdb>=1.5.4",
     "kaggle>=1.7.4.5",
     "polars>=1.42.0",
-    "python-dotenv (>=1.1.0,<2.0.0)",
+    "python-dotenv>=1.1.0",
 ]
 
 [project.optional-dependencies]
 dev = [
-    "pytest (>=8.0.1,<10.0.0)",
-    "pytest-cov (>=6.0.0,<8.0.0)",
-    "pytest-mock (>=3.14.0,<4.0.0)",
-    "pytest-asyncio (>=1.1.0,<2.0.0)",
-    "mypy (>=1.11.1,<2.0.0)",
-    "ruff (>=0.9.3,<1.0.0)",
-    "pre-commit (>=4.2.0,<5.0.0)",
-    "icecream (>=2.1.4,<3.0.0)",
-    "mkdocs (>=1.6.1,<2.0.0)",
-    "mkdocs-material (>=9.6.12,<10.0.0)",
-    "mkdocstrings-python (>=1.16.10,<2.0.0)",
-    "pyyaml (>=6.0.1,<7.0.0)",
-    "rundoc (>=0.2.3,<0.3.0)",
-    "hypothesis (>=6.150.2,<7.0.0)",
-    "griffe (>=1.7.3,<2.0.0)",
+    "pytest >=8.0.1",
+    "pytest-cov >=6.0.0",
+    "pytest-mock >=3.14.0",
+    "pytest-asyncio >=1.1.0",
+    "mypy >=1.11.1",
+    "ruff >=0.9.3",
+    "pre-commit >=4.2.0",
+    "icecream >=2.1.4",
+    "mkdocs >=1.6.1",
+    "mkdocs-material >=9.6.12",
+    "mkdocstrings-python >=1.16.10",
+    "pyyaml >=6.0.1",
+    "rundoc >=0.2.3",
+    "hypothesis >=6.150.2",
+    "griffe >=1.7.3",
 ]
 
 [tool.pytest.ini_options]

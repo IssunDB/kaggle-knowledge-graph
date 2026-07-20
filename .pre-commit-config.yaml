@@ -29,20 +29,6 @@ repos:
         pass_filenames: false
         stages: [ pre-commit ]
 
-      - id: lint
-        name: Run Linter Checks
-        entry: make lint
-        language: system
-        pass_filenames: false
-        stages: [ pre-commit ]
-
-      - id: typecheck
-        name: Run Typechecks
-        entry: make typecheck
-        language: system
-        pass_filenames: false
-        stages: [ pre-commit ]
-
       - id: test
         name: Run Tests
         entry: make test

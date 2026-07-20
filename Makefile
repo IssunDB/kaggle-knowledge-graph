@@ -2,9 +2,8 @@
 PYTHON      ?= python3
 PIP         ?= pip3
 DEP_MNGR    ?= uv
-DOCS_DIR   ?= docs
 META_KAGGLE_DIR ?= /media/data/home/downloads/KW/meta-kaggle
-META_KAGGLE_CODE_DIR ?= /home/hassan/Downloads/KW/meta-kaggle-code
+META_KAGGLE_CODE_DIR ?= ~/Downloads/KW/meta-kaggle-code
 STAGE_DIR ?= stage
 KERNEL_LIMIT ?= 10000
 NEO4J_COMPOSE ?= deploy/neo4j-compose.yml

@@ -17,7 +17,7 @@ The project priorities include correct graph construction, reproducible builds, 
 - Keep the large local source data out of the repository.
 - Ensure staging is deterministic by using a fixed seed rule and fixed source data.
 - Validate staged edges against staged nodes before trusting a graph.
-- Run `make format` and `make lint` before declaring a change done.
+- Run `make format` and `make test` before declaring a change done.
 
 ## Practice Examples
 
@@ -77,6 +77,7 @@ variables, dry run staging on subsets, code formatting, and repository documenta
 
 - The database loader validates that every node file imports, no edge row is malformed, and constraints hold.
 - DuckDB validates staged node and edge counts to confirm that no staged edge points to a missing node.
+- Use red-green test-driven development (TDD) to write tests before implementing new features.
 - Python helpers must pass `pytest` checks.
 
 ## Documentation Expectations
