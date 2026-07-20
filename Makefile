@@ -16,6 +16,9 @@ ISSUNDB_CLI ?= bin/issundb-cli
 ISSUNDB_MCP ?= bin/issundb-mcp
 MAP_SIZE_GB ?= 8
 
+# Kernel knowledge graph build settings
+KERNEL_DB ?= databases/kernel-kg
+
 # Directories and files to clean
 CACHE_DIRS  = .mypy_cache .pytest_cache .ruff_cache
 COVERAGE    = .coverage htmlcov coverage.xml
@@ -109,6 +112,22 @@ kg-parse-imports: ## Parse imports from Meta Kaggle Code for staged kernel versi
 
 .PHONY: kg-stage-all
 kg-stage-all: kg-stage kg-parse-imports ## Stage metadata and parsed import edges
+
+.PHONY: kg-load
+kg-load: ## Load the staged kernel subset, add constraints and indexes, and validate
+	STAGE_DIR="$(STAGE_DIR)" .venv/bin/python scripts/import_to_issundb.py --stage-dir "$(STAGE_DIR)" --db "$(KERNEL_DB)" --cli "$(ISSUNDB_CLI)" --map-size-gb $(MAP_SIZE_GB)
+
+.PHONY: graph-kernel
+graph-kernel: kg-inspect kg-stage-all kg-load ## Build the kernel knowledge graph end to end into $(KERNEL_DB)
+	@echo "kernel-kg ready at $(KERNEL_DB)"
+
+.PHONY: kernel-cli
+kernel-cli: ## Open the kernel knowledge graph in the IssunDB CLI
+	$(ISSUNDB_CLI) --map-size-gb $(MAP_SIZE_GB) $(KERNEL_DB)
+
+.PHONY: kernel-mcp
+kernel-mcp: ## Run the IssunDB MCP server for the kernel knowledge graph
+	$(ISSUNDB_MCP) --db-path $(KERNEL_DB) --map-size-gb $(MAP_SIZE_GB)
 
 # Kaggle knowledge graph
 .PHONY: comp-stage

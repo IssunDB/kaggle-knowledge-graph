@@ -3,7 +3,7 @@
 [![Tests](https://img.shields.io/github/actions/workflow/status/IssunDB/kaggle-knowledge-graph/tests.yml?label=tests&style=flat&labelColor=333333&logo=github&logoColor=white)](https://github.com/IssunDB/kaggle-knowledge-graph/actions/workflows/tests.yml)
 [![Code Coverage](https://img.shields.io/codecov/c/github/IssunDB/kaggle-knowledge-graph?style=flat&label=coverage&labelColor=333333&logo=codecov&logoColor=white)](https://codecov.io/gh/IssunDB/kaggle-knowledge-graph)
 [![Examples](https://img.shields.io/badge/examples-view-green?style=flat&labelColor=282c34&logo=neo4j)](https://github.com/IssunDB/kaggle-knowledge-graph/tree/main/examples)
-[![License](https://img.shields.io/badge/license-MIT-00acc1?style=flat&labelColor=333333&logo=open-source-initiative&logoColor=white)](https://github.com/IssunDB/kaggle-knowledge-graph/blob/main/LICENSE)
+[![License](https://img.shields.io/badge/license-MIT-007ec6?style=flat&labelColor=333333&logo=open-source-initiative&logoColor=white)](https://github.com/IssunDB/kaggle-knowledge-graph/blob/main/LICENSE)
 
 ---
 
@@ -31,9 +31,12 @@ export META_KAGGLE_DIR="/path/to/meta-kaggle"
 
 Build the Kaggle knowledge graph and launch the CLI or MCP server:
 
-- `make graph-kc` builds the knowledge graph from the Meta Kaggle dataset.
-- `make comp-cli` opens the knowledge graph in the IssunDB CLI.
-- `make comp-mcp` runs the IssunDB MCP server for the knowledge graph.
+- `make graph-kc` builds the competition-centered knowledge graph from the Meta Kaggle dataset.
+- `make comp-cli` opens the competition knowledge graph in the IssunDB CLI.
+- `make comp-mcp` runs the IssunDB MCP server for the competition knowledge graph.
+- `make graph-kernel` builds the kernel-centered knowledge graph from the Meta Kaggle dataset (needs `META_KAGGLE_CODE_DIR` for import parsing).
+- `make kernel-cli` opens the kernel knowledge graph in the IssunDB CLI.
+- `make kernel-mcp` runs the IssunDB MCP server for the kernel knowledge graph.
 - `make help` shows all available Makefile targets.
 
 #### MCP Server Configuration
@@ -60,15 +63,19 @@ Replace `/path/to/kaggle-knowledge-graph` with the absolute path to your reposit
 
 #### Knowledge Graph Schema
 
-<div align="center">
-  <picture>
-    <img alt="PG Schema" src="docs/assets/diagrams/schema-pg.svg" height="80%" width="80%">
-  </picture>
-</div>
+##### Property Graph Model
 
 <div align="center">
   <picture>
-    <img alt="Relational Schema" src="docs/assets/diagrams/schema-rel.svg" height="80%" width="80%">
+    <img alt="PG Schema" src="docs/assets/diagrams/schema-pg.svg" height="100%" width="100%">
+  </picture>
+</div>
+
+##### Relational Model
+
+<div align="center">
+  <picture>
+    <img alt="Relational Schema" src="docs/assets/diagrams/schema-rel.svg" height="100%" width="100%">
   </picture>
 </div>
 

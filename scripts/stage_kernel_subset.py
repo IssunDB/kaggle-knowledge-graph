@@ -134,7 +134,7 @@ def stage_nodes(
     copy_parquet(
         con,
         """
-        SELECT Id, ScriptId, VersionNumber, replace(Title, '"', chr(39)) AS Title, CreationDate, TotalLines, TotalVotes,
+        SELECT Id, ScriptId, VersionNumber, Title, CreationDate, TotalLines, TotalVotes,
                IsInternetEnabled, RunningTimeInMilliseconds, DockerImage, AuthorUserId
         FROM seed_kernel_versions
         """,
@@ -143,8 +143,7 @@ def stage_nodes(
     copy_parquet(
         con,
         f"""
-        SELECT u.Id AS Id, replace(UserName, '"', chr(39)) AS UserName, replace(DisplayName, '"', chr(39)) AS DisplayName,
-               RegisterDate, PerformanceTier, Country
+        SELECT u.Id AS Id, UserName, DisplayName, RegisterDate, PerformanceTier, Country
         FROM {csv(meta_dir, "Users.csv")} u
         JOIN seed_user_ids s ON u.Id = s.Id
         """,
@@ -164,8 +163,7 @@ def stage_nodes(
         con,
         """
         SELECT Id, DatasetId, CreatorUserId, LicenseName, CreationDate, VersionNumber,
-               replace(Title, '"', chr(39)) AS Title, Slug, replace(Subtitle, '"', chr(39)) AS Subtitle,
-               TotalCompressedBytes, TotalUncompressedBytes
+               Title, Slug, Subtitle, TotalCompressedBytes, TotalUncompressedBytes
         FROM seed_dataset_versions
         """,
         stage_dir / "nodes_dataset_version.parquet",
@@ -173,8 +171,7 @@ def stage_nodes(
     copy_parquet(
         con,
         """
-        SELECT Id, Slug, replace(Title, '"', chr(39)) AS Title, replace(Subtitle, '"', chr(39)) AS Subtitle,
-               HostSegmentTitle, ForumId, EnabledDate, DeadlineDate,
+        SELECT Id, Slug, Title, Subtitle, HostSegmentTitle, ForumId, EnabledDate, DeadlineDate,
                EvaluationAlgorithmName, EvaluationAlgorithmIsMax, RewardType, RewardQuantity,
                TotalTeams, TotalCompetitors, TotalSubmissions
         FROM seed_competitions
@@ -184,8 +181,7 @@ def stage_nodes(
     copy_parquet(
         con,
         f"""
-        SELECT Id, ParentTagId, replace(Name, '"', chr(39)) AS Name, Slug, FullPath,
-               replace(Description, '"', chr(39)) AS Description
+        SELECT Id, ParentTagId, Name, Slug, FullPath, Description
         FROM {csv(meta_dir, "Tags.csv")}
         """,
         stage_dir / "nodes_tag.parquet",
@@ -193,7 +189,7 @@ def stage_nodes(
     copy_parquet(
         con,
         f"""
-        SELECT DISTINCT f.Id AS Id, ParentForumId, replace(Title, '"', chr(39)) AS Title
+        SELECT DISTINCT f.Id AS Id, ParentForumId, Title
         FROM {csv(meta_dir, "Forums.csv")} f
         WHERE f.Id IN (
             SELECT ForumId FROM seed_competitions WHERE ForumId IS NOT NULL
@@ -206,7 +202,7 @@ def stage_nodes(
     copy_parquet(
         con,
         """
-        SELECT Id, ForumId, KernelId, CreationDate, LastCommentDate, replace(Title, '"', chr(39)) AS Title,
+        SELECT Id, ForumId, KernelId, CreationDate, LastCommentDate, Title,
                IsSticky, TotalViews, Score, TotalMessages, TotalReplies
         FROM seed_forum_topics
         """,
@@ -216,8 +212,7 @@ def stage_nodes(
     if include_text:
         message_query = """
             SELECT Id, ForumTopicId, PostUserId, PostDate, ReplyToForumMessageId,
-                   replace(Message, '"', chr(39)) AS Message, replace(RawMarkdown, '"', chr(39)) AS RawMarkdown,
-                   Medal, MedalAwardDate
+                   Message, RawMarkdown, Medal, MedalAwardDate
             FROM seed_forum_messages
         """
     else:

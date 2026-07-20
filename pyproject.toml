@@ -30,12 +30,12 @@ dev = [
 ]
 
 [tool.pytest.ini_options]
-pythonpath = ["library"]
+pythonpath = ["scripts"]
 testpaths = ["tests"]
 addopts = [
     "--tb=short",
     #"--disable-warnings",
-    "--cov=library",
+    "--cov=scripts",
     "--cov-branch",
     "--cov-report=term",
     "--cov-report=xml",
@@ -48,7 +48,7 @@ asyncio_default_test_loop_scope = "function"
 [tool.coverage.run]
 branch = true
 parallel = true
-source = ["."]
+source = ["scripts"]
 omit = ["tests/*"]
 
 [tool.coverage.report]
@@ -73,11 +73,11 @@ exclude = [
     ".bzr", ".direnv", ".eggs", ".git", ".git-rewrite", ".hg", ".mypy_cache",
     ".nox", ".pants.d", ".pytype", ".ruff_cache", ".svn", ".tox", ".venv",
     "__pypackages__", "_build", "buck-out", "build", "dist", "node_modules",
-    "venv", "tests"
+    "venv"
 ]
 line-length = 100
 indent-width = 4
-src = ["library"]
+src = ["scripts"]
 target-version = "py310"
 unsafe-fixes = false
 

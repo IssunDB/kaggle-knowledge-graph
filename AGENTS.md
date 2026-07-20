@@ -47,6 +47,7 @@ The project priorities include correct graph construction, reproducible builds, 
 - `scripts/parse_imports.py` parses code imports.
 - `scripts/load_competition_kg.py` loads the Kaggle knowledge graph.
 - `scripts/import_to_issundb.py` loads the kernel graph.
+- `scripts/issundb_load.py` holds the loader logic shared by both load scripts.
 - `databases/` includes staged files and graph databases.
 - `bin/issundb-cli` includes the database command line tool binary.
 - `bin/issundb-mcp` includes the MCP server binary.
@@ -55,9 +56,13 @@ The project priorities include correct graph construction, reproducible builds, 
 ## Build Targets
 
 - `make graph-kc` builds the Kaggle knowledge graph.
-- `make comp-cli` opens the knowledge graph in the IssunDB CLI.
-- `make comp-mcp` runs the IssunDB MCP server for the knowledge graph.
+- `make comp-cli` opens the Kaggle knowledge graph in the IssunDB CLI.
+- `make comp-mcp` runs the IssunDB MCP server for the Kaggle knowledge graph.
 - `make kg-stage-all` stages the kernel graph.
+- `make kg-load` loads the staged kernel graph, adds constraints and indexes, and validates the load.
+- `make graph-kernel` builds the kernel knowledge graph end to end.
+- `make kernel-cli` opens the kernel knowledge graph in the IssunDB CLI.
+- `make kernel-mcp` runs the IssunDB MCP server for the kernel knowledge graph.
 - `make help` lists all targets.
 
 ## Pipeline Constraints

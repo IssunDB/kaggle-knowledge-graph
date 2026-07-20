@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import argparse
 import os
+import sys
 from pathlib import Path
 
 import duckdb
@@ -53,9 +54,35 @@ def copy_parquet(con: duckdb.DuckDBPyConnection, query: str, output: Path) -> No
     con.execute(f"COPY ({query}) TO {sql_literal(output)} (FORMAT PARQUET)")
 
 
+def warn_on_unparseable_enabled_dates(con: duckdb.DuckDBPyConnection, meta_dir: Path) -> None:
+    """Warn about `EnabledDate` values the seed filter cannot parse.
+
+    `try_strptime` silently yields NULL for a non-matching format, which the seed
+    filter then excludes the same way it excludes a competition that predates the
+    cutoff. Surface the difference instead of conflating the two.
+    """
+    unparseable_row = con.execute(
+        f"""
+        SELECT count(*)
+        FROM {csv(meta_dir, "Competitions.csv")}
+        WHERE EnabledDate IS NOT NULL
+          AND try_strptime(EnabledDate, '%m/%d/%Y %H:%M:%S') IS NULL
+        """
+    ).fetchone()
+    assert unparseable_row is not None
+    unparseable = unparseable_row[0]
+    if unparseable:
+        print(
+            f"warning: {unparseable} competition row(s) have an EnabledDate that does not "
+            "match '%m/%d/%Y %H:%M:%S' and were excluded from the post-2020 scope",
+            file=sys.stderr,
+        )
+
+
 def create_seed_tables(
     con: duckdb.DuckDBPyConnection, meta_dir: Path, kernels_per_competition: int
 ) -> None:
+    warn_on_unparseable_enabled_dates(con, meta_dir)
     # Seed competitions: enabled on or after the cutoff, excluding Community events.
     con.execute(
         f"""
@@ -182,8 +209,7 @@ def stage_nodes(
     copy_parquet(
         con,
         """
-        SELECT Id, Slug, replace(Title, '"', chr(39)) AS Title, replace(Subtitle, '"', chr(39)) AS Subtitle,
-               HostSegmentTitle, replace(HostName, '"', chr(39)) AS HostName, ForumId, OrganizationId,
+        SELECT Id, Slug, Title, Subtitle, HostSegmentTitle, HostName, ForumId, OrganizationId,
                EnabledDate, DeadlineDate, EvaluationAlgorithmName, EvaluationAlgorithmIsMax,
                RewardType, RewardQuantity, MaxTeamSize, TotalTeams, TotalCompetitors, TotalSubmissions
         FROM seed_competitions
@@ -193,7 +219,7 @@ def stage_nodes(
     copy_parquet(
         con,
         """
-        SELECT Id, CompetitionId, replace(TeamName, '"', chr(39)) AS TeamName, Medal,
+        SELECT Id, CompetitionId, TeamName, Medal,
                PublicLeaderboardRank, PrivateLeaderboardRank, ScoreFirstSubmittedDate,
                LastSubmissionDate, IsBenchmark
         FROM seed_teams
@@ -203,8 +229,7 @@ def stage_nodes(
     copy_parquet(
         con,
         f"""
-        SELECT u.Id AS Id, replace(UserName, '"', chr(39)) AS UserName,
-               replace(DisplayName, '"', chr(39)) AS DisplayName, RegisterDate, PerformanceTier, Country
+        SELECT u.Id AS Id, UserName, DisplayName, RegisterDate, PerformanceTier, Country
         FROM {csv(meta_dir, "Users.csv")} u
         JOIN seed_user_ids s ON u.Id = s.Id
         """,
@@ -231,7 +256,7 @@ def stage_nodes(
     copy_parquet(
         con,
         """
-        SELECT Id, ScriptId, VersionNumber, replace(Title, '"', chr(39)) AS Title, CreationDate,
+        SELECT Id, ScriptId, VersionNumber, Title, CreationDate,
                TotalLines, TotalVotes, IsInternetEnabled, RunningTimeInMilliseconds, DockerImage, AuthorUserId
         FROM seed_kernel_versions
         """,
@@ -240,8 +265,7 @@ def stage_nodes(
     copy_parquet(
         con,
         f"""
-        SELECT Id, ParentTagId, replace(Name, '"', chr(39)) AS Name, Slug, FullPath,
-               replace(Description, '"', chr(39)) AS Description
+        SELECT Id, ParentTagId, Name, Slug, FullPath, Description
         FROM {csv(meta_dir, "Tags.csv")}
         """,
         stage_dir / "nodes_tag.parquet",
@@ -249,7 +273,7 @@ def stage_nodes(
     copy_parquet(
         con,
         f"""
-        SELECT DISTINCT f.Id AS Id, ParentForumId, replace(Title, '"', chr(39)) AS Title
+        SELECT DISTINCT f.Id AS Id, ParentForumId, Title
         FROM {csv(meta_dir, "Forums.csv")} f
         WHERE f.Id IN (
             SELECT ForumId FROM seed_competitions WHERE ForumId IS NOT NULL
@@ -262,21 +286,16 @@ def stage_nodes(
     copy_parquet(
         con,
         """
-        SELECT Id, ForumId, KernelId, CreationDate, LastCommentDate, replace(Title, '"', chr(39)) AS Title,
+        SELECT Id, ForumId, KernelId, CreationDate, LastCommentDate, Title,
                IsSticky, TotalViews, Score, TotalMessages, TotalReplies
         FROM seed_forum_topics
         """,
         stage_dir / "nodes_forum_topic.parquet",
     )
     if include_text:
-        # Normalize embedded newlines to spaces so each message stays on one CSV
-        # line, and replace double quotes with apostrophes, so the line-oriented
-        # CLI importer cannot misparse a multi-line or quote-bearing message body.
         message_query = """
             SELECT Id, ForumTopicId, PostUserId, PostDate, ReplyToForumMessageId,
-                   regexp_replace(replace(Message, '"', chr(39)), '[\\r\\n]+', ' ', 'g') AS Message,
-                   regexp_replace(replace(RawMarkdown, '"', chr(39)), '[\\r\\n]+', ' ', 'g') AS RawMarkdown,
-                   Medal, MedalAwardDate
+                   Message, RawMarkdown, Medal, MedalAwardDate
             FROM seed_forum_messages
         """
     else:

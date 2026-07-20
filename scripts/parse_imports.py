@@ -16,9 +16,10 @@ DEFAULT_CODE_DIR = Path(
 )
 DEFAULT_STAGE_DIR = Path(os.environ.get("STAGE_DIR", "stage"))
 
-PY_IMPORT_RE = re.compile(r"^\s*import\s+([A-Za-z_][\w.]*)", re.MULTILINE)
+PY_IMPORT_RE = re.compile(r"^\s*import\s+(.+)$", re.MULTILINE)
 PY_FROM_RE = re.compile(r"^\s*from\s+([A-Za-z_][\w.]*)\s+import\s+", re.MULTILINE)
 R_IMPORT_RE = re.compile(r"\b(?:library|require)\s*\(\s*['\"]?([A-Za-z][\w.]*)['\"]?\s*\)")
+PY_IMPORT_NAME_RE = re.compile(r"^([A-Za-z_][\w.]*)")
 
 
 def parse_args() -> argparse.Namespace:
@@ -70,13 +71,30 @@ def code_text(path: Path) -> str:
     return path.read_text(encoding="utf-8", errors="ignore")
 
 
+def _add_top_level(libs: set[str], name: str) -> None:
+    top_level = name.split(".", maxsplit=1)[0].strip()
+    if top_level and top_level != "__future__":
+        libs.add(top_level.lower())
+
+
+def _import_clause_names(clause: str) -> list[str]:
+    """Split a comma-separated `import a, b as c` clause into module names."""
+    names: list[str] = []
+    for part in clause.split("#", maxsplit=1)[0].split(","):
+        match = PY_IMPORT_NAME_RE.match(part.strip())
+        if match:
+            names.append(match.group(1))
+    return names
+
+
 def imported_libraries(text: str) -> set[str]:
     libs: set[str] = set()
-    for regex in (PY_IMPORT_RE, PY_FROM_RE, R_IMPORT_RE):
+    for clause in PY_IMPORT_RE.findall(text):
+        for name in _import_clause_names(clause):
+            _add_top_level(libs, name)
+    for regex in (PY_FROM_RE, R_IMPORT_RE):
         for match in regex.findall(text):
-            top_level = match.split(".", maxsplit=1)[0].strip()
-            if top_level and top_level != "__future__":
-                libs.add(top_level.lower())
+            _add_top_level(libs, match)
     return libs
 
 

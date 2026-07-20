@@ -17,12 +17,10 @@ stay searchable through a `CONTAINS` scan.
 from __future__ import annotations
 
 import argparse
-import re
-import shutil
-import subprocess
 import sys
-import time
 from pathlib import Path
+
+from issundb_load import load_and_validate
 
 # Node CSV file names and the label each file's rows carry. Loaded before edges
 # so the edge importer can resolve endpoints by the auto-indexed `Id` property.
@@ -94,11 +92,7 @@ TEXT_INDEXES: list[tuple[str, str]] = [
     ("User", "DisplayName"),
 ]
 
-NODE_LINE = re.compile(r"imported (\d+)/(\d+) (\S+) nodes from (\S+)")
-EDGE_LINE = re.compile(
-    r"imported (\d+) (\S+) edges from (.+?) "
-    r"\((\d+) unresolved endpoint\(s\), (\d+) malformed row\(s\)\)"
-)
+MISSING_HINT = "run `make comp-stage comp-parse-imports` first"
 
 
 def parse_args() -> argparse.Namespace:
@@ -122,125 +116,21 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def count_data_rows(path: Path) -> int:
-    """Count Parquet rows."""
-    import polars as pl
-
-    return pl.scan_parquet(path).select(pl.len()).collect().item()
-
-
-def build_script(stage_dir: Path) -> tuple[str, dict[str, int]]:
-    """Return the CLI script text and the expected per-file node row counts."""
-    lines: list[str] = []
-    expected_nodes: dict[str, int] = {}
-
-    missing: list[str] = []
-    for filename, label in NODE_FILES:
-        path = (stage_dir / filename).resolve()
-        if not path.exists():
-            missing.append(filename)
-            continue
-        expected_nodes[filename] = count_data_rows(path)
-        lines.append(f":import-nodes {path} {label}")
-    for filename, src, dst, etype in EDGE_FILES:
-        path = (stage_dir / filename).resolve()
-        if not path.exists():
-            missing.append(filename)
-            continue
-        lines.append(f":import-edges {path} {src} {dst} {etype}")
-
-    if missing:
-        raise SystemExit(
-            "missing staged files (run `make comp-stage comp-parse-imports` first): "
-            + ", ".join(missing)
-        )
-
-    # Integrity: each table's id is unique, so a duplicate is a staging defect.
-    for _, label in NODE_FILES:
-        lines.append(f"CREATE CONSTRAINT ON (n:{label}) ASSERT n.Id IS UNIQUE")
-    # Full-text indexes for title and name search.
-    for label, prop in TEXT_INDEXES:
-        lines.append(f"CREATE INDEX FOR (n:{label}) ON (n.{prop})")
-
-    lines.append("rebuild-csr")
-    lines.append("stats")
-    lines.append("quit")
-    return "\n".join(lines) + "\n", expected_nodes
-
-
-def validate(log_text: str, expected_nodes: dict[str, int]) -> list[str]:
-    """Return a list of failure messages; empty means the load passed."""
-    failures: list[str] = []
-
-    # Any command-level error fails the load (including a rejected constraint).
-    for line in log_text.splitlines():
-        low = line.lower()
-        if low.startswith("error") or "mdb_" in low or "storage dependency error" in low:
-            failures.append(f"command error: {line.strip()}")
-
-    seen_nodes: dict[str, tuple[int, int]] = {}
-    for imported, total, _label, path in NODE_LINE.findall(log_text):
-        seen_nodes[Path(path).name] = (int(imported), int(total))
-    for filename, expected in expected_nodes.items():
-        if filename not in seen_nodes:
-            failures.append(f"{filename}: no import line found in log")
-            continue
-        imported, total = seen_nodes[filename]
-        if imported != total:
-            failures.append(f"{filename}: imported {imported} of {total} nodes")
-        if total != expected:
-            failures.append(f"{filename}: imported {total} nodes, expected {expected} staged rows")
-
-    for _imported, _etype, path, _unresolved, malformed in EDGE_LINE.findall(log_text):
-        if int(malformed) != 0:
-            failures.append(f"{Path(path).name}: {malformed} malformed edge row(s)")
-
-    return failures
-
-
 def main() -> None:
     args = parse_args()
-    script_text, expected_nodes = build_script(args.stage_dir)
-    args.script.parent.mkdir(parents=True, exist_ok=True)
-    args.script.write_text(script_text, encoding="utf-8")
-    print(f"Wrote load script to {args.script}")
-
-    if args.db.exists():
-        print(f"Removing existing database directory {args.db}")
-        shutil.rmtree(args.db)
-    args.db.mkdir(parents=True, exist_ok=True)
-
-    print(f"Loading into {args.db} (map size {args.map_size_gb} GiB)...")
-    start = time.time()
-    with (
-        args.script.open("r", encoding="utf-8") as script,
-        args.log.open("w", encoding="utf-8") as log,
-    ):
-        process = subprocess.run(
-            [str(args.cli), "--map-size-gb", str(args.map_size_gb), str(args.db)],
-            stdin=script,
-            stdout=log,
-            stderr=subprocess.STDOUT,
-        )
-    elapsed = time.time() - start
-    print(f"CLI finished in {elapsed:.1f}s (exit {process.returncode}); log at {args.log}")
-
-    log_text = args.log.read_text(encoding="utf-8", errors="replace")
-    failures = validate(log_text, expected_nodes)
-
-    # Echo the graph statistics block for a quick eyeball.
-    stats_start = log_text.find("Database")
-    if stats_start != -1:
-        print("\n" + log_text[stats_start:].strip())
-
-    if process.returncode != 0:
-        failures.append(f"CLI exited with code {process.returncode}")
-    if failures:
-        print("\nCHECK FAILED:")
-        for failure in failures:
-            print(f"  - {failure}")
-        sys.exit(1)
-    print("\nCHECK PASSED: all node files imported in full, no malformed edges, no errors.")
+    exit_code = load_and_validate(
+        stage_dir=args.stage_dir,
+        db=args.db,
+        cli=args.cli,
+        map_size_gb=args.map_size_gb,
+        script_path=args.script,
+        log_path=args.log,
+        node_files=NODE_FILES,
+        edge_files=EDGE_FILES,
+        text_indexes=TEXT_INDEXES,
+        missing_hint=MISSING_HINT,
+    )
+    sys.exit(exit_code)
 
 
 if __name__ == "__main__":

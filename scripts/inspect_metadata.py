@@ -47,7 +47,9 @@ def main() -> None:
     for csv_file in csv_files:
         table = csv_file.name
         source = f"read_csv_auto({sql_literal(csv_file)}, max_line_size=16000000)"
-        row_count = con.execute(f"SELECT count(*) FROM {source}").fetchone()[0]
+        row_count_row = con.execute(f"SELECT count(*) FROM {source}").fetchone()
+        assert row_count_row is not None
+        row_count = row_count_row[0]
         schema = con.execute(f"DESCRIBE SELECT * FROM {source} LIMIT 0").fetchall()
         columns = ", ".join(f"`{name}`" for name, *_ in schema)
         lines.append(f"| `{table}` | {row_count:,} | {columns} |")
