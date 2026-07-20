@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "kaggle-comp-kg": {
+      "command": "/path/to/kaggle-knowledge-graph/bin/issundb-mcp",
+      "args": [
+        "--db-path",
+        "/path/to/kaggle-knowledge-graph/databases/comp-kg",
+        "--map-size-gb",
+        "8"
+      ]
+    }
+  }
+}

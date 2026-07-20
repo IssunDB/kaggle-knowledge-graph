@@ -21,6 +21,30 @@ Build the competition knowledge graph and launch interactive or MCP interfaces:
 
 ---
 
+### MCP Server Configuration
+
+To connect external AI assistants or IDEs to the IssunDB MCP server, use the configuration template at `examples/mcp_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "kaggle-comp-kg": {
+      "command": "/path/to/kaggle-knowledge-graph/bin/issundb-mcp",
+      "args": [
+        "--db-path",
+        "/path/to/kaggle-knowledge-graph/databases/comp-kg",
+        "--map-size-gb",
+        "8"
+      ]
+    }
+  }
+}
+```
+
+Replace `/path/to/kaggle-knowledge-graph` with the absolute path to your repository root directory.
+
+---
+
 ### Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for details on how to make a contribution.

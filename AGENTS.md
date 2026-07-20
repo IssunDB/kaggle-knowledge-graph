@@ -50,7 +50,7 @@ The project priorities include correct graph construction, reproducible builds, 
 - `databases/` includes staged files and graph databases.
 - `bin/issundb-cli` includes the database command line tool binary.
 - `bin/issundb-mcp` includes the MCP server binary.
-- `examples/` includes Cypher query templates for common Kaggle analysis scenarios.
+- `examples/` includes Cypher query templates and MCP client configuration templates.
 
 ## Build Targets
 
