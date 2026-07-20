@@ -8,7 +8,7 @@ STAGE_DIR ?= stage
 KERNEL_LIMIT ?= 10000
 NEO4J_COMPOSE ?= deploy/neo4j-compose.yml
 
-# Competition knowledge graph (post-2020 real competitions) build settings
+# Kaggle knowledge graph build settings
 COMP_STAGE_DIR ?= databases/staging_data
 COMP_DB ?= databases/comp-kg
 KERNELS_PER_COMPETITION ?= 50
@@ -110,7 +110,7 @@ kg-parse-imports: ## Parse imports from Meta Kaggle Code for staged kernel versi
 .PHONY: kg-stage-all
 kg-stage-all: kg-stage kg-parse-imports ## Stage metadata and parsed import edges
 
-# Competition knowledge graph
+# Kaggle knowledge graph
 .PHONY: comp-stage
 comp-stage: ## Stage the post-2020 competition subset (with forum message text)
 	META_KAGGLE_DIR="$(META_KAGGLE_DIR)" .venv/bin/python scripts/stage_competition_subset.py --stage-dir "$(COMP_STAGE_DIR)" --kernels-per-competition $(KERNELS_PER_COMPETITION) --include-message-text
@@ -124,15 +124,15 @@ comp-load: ## Load the staged competition subset, add constraints and indexes, a
 	.venv/bin/python scripts/load_competition_kg.py --stage-dir "$(COMP_STAGE_DIR)" --db "$(COMP_DB)" --cli "$(ISSUNDB_CLI)" --map-size-gb $(MAP_SIZE_GB)
 
 .PHONY: graph-kc
-graph-kc: kg-inspect comp-stage comp-parse-imports comp-load ## Build the competition knowledge graph end to end into $(COMP_DB)
+graph-kc: kg-inspect comp-stage comp-parse-imports comp-load ## Build the Kaggle knowledge graph end to end into $(COMP_DB)
 	@echo "comp-kg ready at $(COMP_DB)"
 
 .PHONY: comp-cli
-comp-cli: ## Open the competition knowledge graph in the IssunDB CLI
+comp-cli: ## Open the Kaggle knowledge graph in the IssunDB CLI
 	$(ISSUNDB_CLI) --map-size-gb $(MAP_SIZE_GB) $(COMP_DB)
 
 .PHONY: comp-mcp
-comp-mcp: ## Run the IssunDB MCP server for the competition knowledge graph
+comp-mcp: ## Run the IssunDB MCP server for the Kaggle knowledge graph
 	$(ISSUNDB_MCP) --db-path $(COMP_DB) --map-size-gb $(MAP_SIZE_GB)
 
 .PHONY: neo4j-up

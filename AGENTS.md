@@ -45,7 +45,7 @@ The project priorities include correct graph construction, reproducible builds, 
 - `scripts/stage_kernel_subset.py` stages top-voted kernels.
 - `scripts/stage_competition_subset.py` stages competition metadata.
 - `scripts/parse_imports.py` parses code imports.
-- `scripts/load_competition_kg.py` loads the competition graph.
+- `scripts/load_competition_kg.py` loads the Kaggle knowledge graph.
 - `scripts/import_to_issundb.py` loads the kernel graph.
 - `databases/` includes staged files and graph databases.
 - `bin/issundb-cli` includes the database command line tool binary.
@@ -54,9 +54,9 @@ The project priorities include correct graph construction, reproducible builds, 
 
 ## Build Targets
 
-- `make graph-kc` builds the competition knowledge graph.
-- `make comp-cli` opens the competition knowledge graph in the IssunDB CLI.
-- `make comp-mcp` runs the IssunDB MCP server for the competition knowledge graph.
+- `make graph-kc` builds the Kaggle knowledge graph.
+- `make comp-cli` opens the knowledge graph in the IssunDB CLI.
+- `make comp-mcp` runs the IssunDB MCP server for the knowledge graph.
 - `make kg-stage-all` stages the kernel graph.
 - `make help` lists all targets.
 

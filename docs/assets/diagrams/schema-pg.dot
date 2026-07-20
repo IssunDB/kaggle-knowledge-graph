@@ -1,0 +1,70 @@
+digraph KaggleKnowledgeGraphPropertySchema {
+    fontname = "Helvetica,Arial,sans-serif"
+    layout = dot
+    rankdir = LR
+    ranksep = 1.4
+    nodesep = 0.8
+    splines = true
+    bgcolor = "white"
+
+    node [
+        fontname = "Helvetica,Arial,sans-serif",
+        fontsize = 12,
+        shape = circle,
+        style = "filled",
+        penwidth = 2.5,
+        width = 1.5,
+        height = 1.5,
+        fixedsize = true
+    ]
+
+    edge [
+        fontname = "Helvetica,Arial,sans-serif",
+        fontsize = 9,
+        color = "#475569",
+        fontcolor = "#0f172a",
+        penwidth = 1.8,
+        arrowsize = 0.8
+    ]
+
+    // Node labels with distinct color themes
+    Competition   [label = "Competition",   fillcolor = "#dbeafe", color = "#1e40af", fontcolor = "#1e40af"]
+    Team          [label = "Team",          fillcolor = "#ffedd5", color = "#c2410c", fontcolor = "#c2410c"]
+    User          [label = "User",          fillcolor = "#fef3c7", color = "#b45309", fontcolor = "#b45309"]
+    Submission    [label = "Submission",    fillcolor = "#fce7f3", color = "#be185d", fontcolor = "#be185d"]
+    Kernel        [label = "Kernel",        fillcolor = "#e0e7ff", color = "#3730a3", fontcolor = "#3730a3"]
+    KernelVersion [label = "KernelVersion", fillcolor = "#ede9fe", color = "#6d28d9", fontcolor = "#6d28d9"]
+    Library       [label = "Library",       fillcolor = "#fef08a", color = "#854d0e", fontcolor = "#854d0e"]
+    Tag           [label = "Tag",           fillcolor = "#d1fae5", color = "#047857", fontcolor = "#047857"]
+    Forum         [label = "Forum",         fillcolor = "#ccfbf1", color = "#0f766e", fontcolor = "#0f766e"]
+    ForumTopic    [label = "ForumTopic",    fillcolor = "#cffafe", color = "#0369a1", fontcolor = "#0369a1"]
+    ForumMessage  [label = "ForumMessage",  fillcolor = "#e0f2fe", color = "#0284c7", fontcolor = "#0284c7"]
+
+    // Competition & Team relationships
+    Team -> Competition [label = "COMPETED_IN"]
+    User -> Team [label = "MEMBER_OF_TEAM\nLED_TEAM"]
+
+    // Submission relationships
+    Submission -> Team [label = "FOR_TEAM"]
+    User -> Submission [label = "SUBMITTED"]
+    Submission -> KernelVersion [label = "FROM_KERNEL_VERSION"]
+    Team -> Submission [label = "PUBLIC_LEADERBOARD_SUBMISSION\nPRIVATE_LEADERBOARD_SUBMISSION"]
+
+    // Code & Library relationships
+    User -> Kernel [label = "AUTHORED_KERNEL"]
+    Kernel -> KernelVersion [label = "HAS_VERSION\nCURRENT_VERSION"]
+    KernelVersion -> User [label = "AUTHORED_BY"]
+    KernelVersion -> Competition [label = "USES_COMPETITION"]
+    KernelVersion -> Library [label = "IMPORTS"]
+
+    // Discussion Forum relationships
+    Competition -> Forum [label = "HAS_FORUM"]
+    Forum -> ForumTopic [label = "HAS_TOPIC"]
+    ForumTopic -> ForumMessage [label = "HAS_MESSAGE"]
+    User -> ForumMessage [label = "POSTED_MESSAGE"]
+    ForumMessage -> ForumMessage [label = "REPLIES_TO"]
+
+    // Tag taxonomy relationships
+    Kernel -> Tag [label = "TAGGED_WITH"]
+    Competition -> Tag [label = "TAGGED_WITH"]
+}

@@ -2,6 +2,7 @@
 
 [![Tests](https://img.shields.io/github/actions/workflow/status/IssunDB/kaggle-knowledge-graph/tests.yml?label=tests&style=flat&labelColor=333333&logo=github&logoColor=white)](https://github.com/IssunDB/kaggle-knowledge-graph/actions/workflows/tests.yml)
 [![Code Coverage](https://img.shields.io/codecov/c/github/IssunDB/kaggle-knowledge-graph?style=flat&label=coverage&labelColor=333333&logo=codecov&logoColor=white)](https://codecov.io/gh/IssunDB/kaggle-knowledge-graph)
+[![Examples](https://img.shields.io/badge/examples-view-green?style=flat&labelColor=282c34&logo=neo4j)](https://github.com/IssunDB/kaggle-knowledge-graph/tree/main/examples)
 [![License](https://img.shields.io/badge/license-MIT-00acc1?style=flat&labelColor=333333&logo=open-source-initiative&logoColor=white)](https://github.com/IssunDB/kaggle-knowledge-graph/blob/main/LICENSE)
 
 ---
@@ -26,24 +27,18 @@ https://www.kaggle.com/api/v1/datasets/download/kaggle/meta-kaggle
 export META_KAGGLE_DIR="/path/to/meta-kaggle"
 ```
 
-Alternatively, specify variables directly when executing build commands:
-
-```bash
-META_KAGGLE_DIR="/path/to/meta-kaggle" make graph-kc
-```
-
 #### Build and Launch
 
-Build the competition knowledge graph and launch interactive or MCP interfaces:
+Build the Kaggle knowledge graph and launch the CLI or MCP server:
 
-- `make graph-kc` builds the competition knowledge graph.
-- `make comp-cli` opens the competition knowledge graph in the IssunDB CLI.
-- `make comp-mcp` runs the IssunDB MCP server for the competition knowledge graph.
-- `make help` lists all available Makefile targets.
+- `make graph-kc` builds the knowledge graph from the Meta Kaggle dataset.
+- `make comp-cli` opens the knowledge graph in the IssunDB CLI.
+- `make comp-mcp` runs the IssunDB MCP server for the knowledge graph.
+- `make help` shows all available Makefile targets.
 
 #### MCP Server Configuration
 
-To connect external AI assistants or IDEs to the IssunDB MCP server, use the configuration template at `examples/mcp_config.json`:
+To connect AI agents to the IssunDB MCP server, use the configuration template at [examples/mcp_config.json](examples/mcp_config.json):
 
 ```json
 {
@@ -62,6 +57,20 @@ To connect external AI assistants or IDEs to the IssunDB MCP server, use the con
 ```
 
 Replace `/path/to/kaggle-knowledge-graph` with the absolute path to your repository root directory.
+
+#### Knowledge Graph Schema
+
+<div align="center">
+  <picture>
+    <img alt="PG Schema" src="docs/assets/diagrams/schema-pg.svg" height="80%" width="80%">
+  </picture>
+</div>
+
+<div align="center">
+  <picture>
+    <img alt="Relational Schema" src="docs/assets/diagrams/schema-rel.svg" height="80%" width="80%">
+  </picture>
+</div>
 
 ---
 

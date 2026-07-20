@@ -1,0 +1,164 @@
+digraph KaggleKnowledgeGraphRelationalSchema {
+    fontname = "Helvetica,Arial,sans-serif"
+    layout = dot
+    rankdir = LR
+    ranksep = 1.0
+    nodesep = 0.5
+    splines = true
+    bgcolor = "white"
+
+    node [
+        fontname = "Helvetica,Arial,sans-serif",
+        shape = plain
+    ]
+
+    edge [
+        fontname = "Helvetica,Arial,sans-serif",
+        fontsize = 9,
+        color = "#475569",
+        fontcolor = "#0f172a",
+        penwidth = 1.5,
+        arrowsize = 0.8
+    ]
+
+    // Competition table
+    Competition [label = <<table border="0" cellborder="1" cellspacing="0" cellpadding="5" color="#1e40af">
+<tr><td bgcolor="#dbeafe"><b><font color="#1e40af">Competition</font></b></td></tr>
+<tr><td align="left" bgcolor="#ffffff"><font color="#0f172a">Id : int (PK)</font></td></tr>
+<tr><td align="left" bgcolor="#ffffff"><font color="#334155">Slug : string</font></td></tr>
+<tr><td align="left" bgcolor="#ffffff"><font color="#334155">Title : string</font></td></tr>
+<tr><td align="left" bgcolor="#ffffff"><font color="#334155">Subtitle : string</font></td></tr>
+<tr><td align="left" bgcolor="#ffffff"><font color="#334155">HostSegmentTitle : string</font></td></tr>
+<tr><td align="left" bgcolor="#ffffff"><font color="#334155">HostName : string</font></td></tr>
+<tr><td align="left" bgcolor="#ffffff"><font color="#334155">ForumId : int (FK)</font></td></tr>
+<tr><td align="left" bgcolor="#ffffff"><font color="#334155">EnabledDate : datetime</font></td></tr>
+<tr><td align="left" bgcolor="#ffffff"><font color="#334155">DeadlineDate : datetime</font></td></tr>
+<tr><td align="left" bgcolor="#ffffff"><font color="#334155">RewardType : string</font></td></tr>
+<tr><td align="left" bgcolor="#ffffff"><font color="#334155">TotalTeams : int</font></td></tr>
+</table>>]
+
+    // Team table
+    Team [label = <<table border="0" cellborder="1" cellspacing="0" cellpadding="5" color="#c2410c">
+<tr><td bgcolor="#ffedd5"><b><font color="#c2410c">Team</font></b></td></tr>
+<tr><td align="left" bgcolor="#ffffff"><font color="#0f172a">Id : int (PK)</font></td></tr>
+<tr><td align="left" bgcolor="#ffffff"><font color="#334155">CompetitionId : int (FK)</font></td></tr>
+<tr><td align="left" bgcolor="#ffffff"><font color="#334155">TeamName : string</font></td></tr>
+<tr><td align="left" bgcolor="#ffffff"><font color="#334155">Medal : int</font></td></tr>
+<tr><td align="left" bgcolor="#ffffff"><font color="#334155">PublicLeaderboardRank : int</font></td></tr>
+<tr><td align="left" bgcolor="#ffffff"><font color="#334155">PrivateLeaderboardRank : int</font></td></tr>
+</table>>]
+
+    // User table
+    User [label = <<table border="0" cellborder="1" cellspacing="0" cellpadding="5" color="#b45309">
+<tr><td bgcolor="#fef3c7"><b><font color="#b45309">User</font></b></td></tr>
+<tr><td align="left" bgcolor="#ffffff"><font color="#0f172a">Id : int (PK)</font></td></tr>
+<tr><td align="left" bgcolor="#ffffff"><font color="#334155">UserName : string</font></td></tr>
+<tr><td align="left" bgcolor="#ffffff"><font color="#334155">DisplayName : string</font></td></tr>
+<tr><td align="left" bgcolor="#ffffff"><font color="#334155">RegisterDate : datetime</font></td></tr>
+<tr><td align="left" bgcolor="#ffffff"><font color="#334155">PerformanceTier : int</font></td></tr>
+<tr><td align="left" bgcolor="#ffffff"><font color="#334155">Country : string</font></td></tr>
+</table>>]
+
+    // Submission table
+    Submission [label = <<table border="0" cellborder="1" cellspacing="0" cellpadding="5" color="#be185d">
+<tr><td bgcolor="#fce7f3"><b><font color="#be185d">Submission</font></b></td></tr>
+<tr><td align="left" bgcolor="#ffffff"><font color="#0f172a">Id : int (PK)</font></td></tr>
+<tr><td align="left" bgcolor="#ffffff"><font color="#334155">TeamId : int (FK)</font></td></tr>
+<tr><td align="left" bgcolor="#ffffff"><font color="#334155">SubmittedUserId : int (FK)</font></td></tr>
+<tr><td align="left" bgcolor="#ffffff"><font color="#334155">SourceKernelVersionId : int (FK)</font></td></tr>
+<tr><td align="left" bgcolor="#ffffff"><font color="#334155">SubmissionDate : datetime</font></td></tr>
+<tr><td align="left" bgcolor="#ffffff"><font color="#334155">PublicScoreFullPrecision : float</font></td></tr>
+<tr><td align="left" bgcolor="#ffffff"><font color="#334155">PrivateScoreFullPrecision : float</font></td></tr>
+</table>>]
+
+    // Kernel table
+    Kernel [label = <<table border="0" cellborder="1" cellspacing="0" cellpadding="5" color="#3730a3">
+<tr><td bgcolor="#e0e7ff"><b><font color="#3730a3">Kernel</font></b></td></tr>
+<tr><td align="left" bgcolor="#ffffff"><font color="#0f172a">Id : int (PK)</font></td></tr>
+<tr><td align="left" bgcolor="#ffffff"><font color="#334155">AuthorUserId : int (FK)</font></td></tr>
+<tr><td align="left" bgcolor="#ffffff"><font color="#334155">CurrentKernelVersionId : int (FK)</font></td></tr>
+<tr><td align="left" bgcolor="#ffffff"><font color="#334155">ForumTopicId : int (FK)</font></td></tr>
+<tr><td align="left" bgcolor="#ffffff"><font color="#334155">CreationDate : datetime</font></td></tr>
+<tr><td align="left" bgcolor="#ffffff"><font color="#334155">TotalVotes : int</font></td></tr>
+<tr><td align="left" bgcolor="#ffffff"><font color="#334155">CurrentUrlSlug : string</font></td></tr>
+</table>>]
+
+    // KernelVersion table
+    KernelVersion [label = <<table border="0" cellborder="1" cellspacing="0" cellpadding="5" color="#6d28d9">
+<tr><td bgcolor="#ede9fe"><b><font color="#6d28d9">KernelVersion</font></b></td></tr>
+<tr><td align="left" bgcolor="#ffffff"><font color="#0f172a">Id : int (PK)</font></td></tr>
+<tr><td align="left" bgcolor="#ffffff"><font color="#334155">ScriptId : int (FK)</font></td></tr>
+<tr><td align="left" bgcolor="#ffffff"><font color="#334155">AuthorUserId : int (FK)</font></td></tr>
+<tr><td align="left" bgcolor="#ffffff"><font color="#334155">VersionNumber : int</font></td></tr>
+<tr><td align="left" bgcolor="#ffffff"><font color="#334155">Title : string</font></td></tr>
+<tr><td align="left" bgcolor="#ffffff"><font color="#334155">TotalLines : int</font></td></tr>
+<tr><td align="left" bgcolor="#ffffff"><font color="#334155">DockerImage : string</font></td></tr>
+</table>>]
+
+    // Library table
+    Library [label = <<table border="0" cellborder="1" cellspacing="0" cellpadding="5" color="#854d0e">
+<tr><td bgcolor="#fef08a"><b><font color="#854d0e">Library</font></b></td></tr>
+<tr><td align="left" bgcolor="#ffffff"><font color="#0f172a">Id : string (PK)</font></td></tr>
+<tr><td align="left" bgcolor="#ffffff"><font color="#334155">Name : string</font></td></tr>
+</table>>]
+
+    // Tag table
+    Tag [label = <<table border="0" cellborder="1" cellspacing="0" cellpadding="5" color="#047857">
+<tr><td bgcolor="#d1fae5"><b><font color="#047857">Tag</font></b></td></tr>
+<tr><td align="left" bgcolor="#ffffff"><font color="#0f172a">Id : int (PK)</font></td></tr>
+<tr><td align="left" bgcolor="#ffffff"><font color="#334155">ParentTagId : int (FK)</font></td></tr>
+<tr><td align="left" bgcolor="#ffffff"><font color="#334155">Name : string</font></td></tr>
+<tr><td align="left" bgcolor="#ffffff"><font color="#334155">Slug : string</font></td></tr>
+</table>>]
+
+    // Forum table
+    Forum [label = <<table border="0" cellborder="1" cellspacing="0" cellpadding="5" color="#0f766e">
+<tr><td bgcolor="#ccfbf1"><b><font color="#0f766e">Forum</font></b></td></tr>
+<tr><td align="left" bgcolor="#ffffff"><font color="#0f172a">Id : int (PK)</font></td></tr>
+<tr><td align="left" bgcolor="#ffffff"><font color="#334155">ParentForumId : int (FK)</font></td></tr>
+<tr><td align="left" bgcolor="#ffffff"><font color="#334155">Title : string</font></td></tr>
+</table>>]
+
+    // ForumTopic table
+    ForumTopic [label = <<table border="0" cellborder="1" cellspacing="0" cellpadding="5" color="#0369a1">
+<tr><td bgcolor="#cffafe"><b><font color="#0369a1">ForumTopic</font></b></td></tr>
+<tr><td align="left" bgcolor="#ffffff"><font color="#0f172a">Id : int (PK)</font></td></tr>
+<tr><td align="left" bgcolor="#ffffff"><font color="#334155">ForumId : int (FK)</font></td></tr>
+<tr><td align="left" bgcolor="#ffffff"><font color="#334155">KernelId : int (FK)</font></td></tr>
+<tr><td align="left" bgcolor="#ffffff"><font color="#334155">Title : string</font></td></tr>
+<tr><td align="left" bgcolor="#ffffff"><font color="#334155">TotalMessages : int</font></td></tr>
+</table>>]
+
+    // ForumMessage table
+    ForumMessage [label = <<table border="0" cellborder="1" cellspacing="0" cellpadding="5" color="#0284c7">
+<tr><td bgcolor="#e0f2fe"><b><font color="#0284c7">ForumMessage</font></b></td></tr>
+<tr><td align="left" bgcolor="#ffffff"><font color="#0f172a">Id : int (PK)</font></td></tr>
+<tr><td align="left" bgcolor="#ffffff"><font color="#334155">ForumTopicId : int (FK)</font></td></tr>
+<tr><td align="left" bgcolor="#ffffff"><font color="#334155">PostUserId : int (FK)</font></td></tr>
+<tr><td align="left" bgcolor="#ffffff"><font color="#334155">ReplyToForumMessageId : int (FK)</font></td></tr>
+<tr><td align="left" bgcolor="#ffffff"><font color="#334155">PostDate : datetime</font></td></tr>
+<tr><td align="left" bgcolor="#ffffff"><font color="#334155">Message : text</font></td></tr>
+</table>>]
+
+    // Foreign Key Relationships
+    Team -> Competition [label = "CompetitionId"]
+    User -> Team [label = "Member / Leader"]
+    Submission -> Team [label = "TeamId"]
+    Submission -> User [label = "SubmittedUserId"]
+    Submission -> KernelVersion [label = "SourceKernelVersionId"]
+
+    Kernel -> User [label = "AuthorUserId"]
+    Kernel -> KernelVersion [label = "CurrentVersionId"]
+    KernelVersion -> Kernel [label = "ScriptId"]
+    KernelVersion -> User [label = "AuthorUserId"]
+    KernelVersion -> Library [label = "Imports"]
+
+    Competition -> Forum [label = "ForumId"]
+    ForumTopic -> Forum [label = "ForumId"]
+    ForumMessage -> ForumTopic [label = "ForumTopicId"]
+    ForumMessage -> User [label = "PostUserId"]
+    ForumMessage -> ForumMessage [label = "ReplyToId"]
+
+    Kernel -> Tag [label = "Tagged"]
+    Competition -> Tag [label = "Tagged"]
+}
