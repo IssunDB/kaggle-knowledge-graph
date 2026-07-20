@@ -31,10 +31,10 @@ export META_KAGGLE_DIR="/path/to/meta-kaggle"
 
 Build the Kaggle knowledge graph and launch the CLI or MCP server:
 
-- `make graph-kc` builds the competition-centered knowledge graph from the Meta Kaggle dataset.
+- `make graph-kc` builds the competition-centered knowledge graph from the Meta Kaggle dataset (needs `META_KAGGLE_CODE_DIR` for import and API call parsing).
 - `make comp-cli` opens the competition knowledge graph in the IssunDB CLI.
 - `make comp-mcp` runs the IssunDB MCP server for the competition knowledge graph.
-- `make graph-kernel` builds the kernel-centered knowledge graph from the Meta Kaggle dataset (needs `META_KAGGLE_CODE_DIR` for import parsing).
+- `make graph-kernel` builds the kernel-centered knowledge graph from the Meta Kaggle dataset (needs `META_KAGGLE_CODE_DIR` for import and API call parsing).
 - `make kernel-cli` opens the kernel knowledge graph in the IssunDB CLI.
 - `make kernel-mcp` runs the IssunDB MCP server for the kernel knowledge graph.
 - `make help` shows all available Makefile targets.
@@ -63,6 +63,13 @@ Replace `/path/to/kaggle-knowledge-graph` with the absolute path to your reposit
 
 #### Knowledge Graph Schema
 
+Both graphs share a code layer parsed from the Meta Kaggle Code dataset. Each staged kernel
+version links to the libraries it imports through `IMPORTS` edges, and to the qualified
+Python API calls it makes (for example, `sklearn.ensemble.RandomForestClassifier`) through
+`CALLS` edges. Each `ApiCall` node links back to its `Library` node through an `IN_LIBRARY`
+edge. The competition graph also stages the datasets and dataset versions used by its
+kernel versions, so leaderboard results, code, and data sources are connected in one graph.
+
 ##### Property Graph Model
 
 <div align="center">
@@ -87,5 +94,5 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for details on how to make a contribution
 
 ### License
 
-This project is licensed under the MIT License (see [LICENSE](LICENSE)) except the knowledge graph data (built by the code in this repository), which
+This project is licensed under the [MIT License](LICENSE) except the knowledge graph data (built by the code in this repository), which
 is subject to the [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/) license.

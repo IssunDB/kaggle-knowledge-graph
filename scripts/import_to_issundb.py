@@ -30,9 +30,11 @@ NODE_FILES: list[tuple[str, str]] = [
     ("nodes_competition.parquet", "Competition"),
     ("nodes_tag.parquet", "Tag"),
     ("nodes_library.parquet", "Library"),
+    ("nodes_api_call.parquet", "ApiCall"),
     ("nodes_forum.parquet", "Forum"),
     ("nodes_forum_topic.parquet", "ForumTopic"),
     ("nodes_forum_message.parquet", "ForumMessage"),
+    ("nodes_organization.parquet", "Organization"),
 ]
 
 # Edge file names with their source label, destination label, and type.
@@ -42,7 +44,15 @@ EDGE_FILES: list[tuple[str, str, str, str]] = [
     ("edges_kernel_current_version.parquet", "Kernel", "KernelVersion", "CURRENT_VERSION"),
     ("edges_kernel_first_version.parquet", "Kernel", "KernelVersion", "FIRST_VERSION"),
     ("edges_kernel_version_authored_by_user.parquet", "KernelVersion", "User", "AUTHORED_BY"),
+    (
+        "edges_kernel_version_forked_from.parquet",
+        "KernelVersion",
+        "KernelVersion",
+        "FORKED_FROM",
+    ),
     ("edges_kernel_version_imports_library.parquet", "KernelVersion", "Library", "IMPORTS"),
+    ("edges_kernel_version_calls_api_call.parquet", "KernelVersion", "ApiCall", "CALLS"),
+    ("edges_api_call_in_library.parquet", "ApiCall", "Library", "IN_LIBRARY"),
     (
         "edges_kernel_version_uses_dataset_version.parquet",
         "KernelVersion",
@@ -61,6 +71,24 @@ EDGE_FILES: list[tuple[str, str, str, str]] = [
     ("edges_dataset_tagged_with_tag.parquet", "Dataset", "Tag", "TAGGED_WITH"),
     ("edges_competition_tagged_with_tag.parquet", "Competition", "Tag", "TAGGED_WITH"),
     ("edges_competition_has_forum.parquet", "Competition", "Forum", "HAS_FORUM"),
+    (
+        "edges_competition_has_organization.parquet",
+        "Competition",
+        "Organization",
+        "HAS_ORGANIZATION",
+    ),
+    (
+        "edges_dataset_owned_by_organization.parquet",
+        "Dataset",
+        "Organization",
+        "OWNED_BY_ORGANIZATION",
+    ),
+    (
+        "edges_user_member_of_organization.parquet",
+        "User",
+        "Organization",
+        "MEMBER_OF_ORGANIZATION",
+    ),
     ("edges_forum_has_topic.parquet", "Forum", "ForumTopic", "HAS_TOPIC"),
     ("edges_kernel_has_forum_topic.parquet", "Kernel", "ForumTopic", "HAS_FORUM_TOPIC"),
     ("edges_forum_topic_has_message.parquet", "ForumTopic", "ForumMessage", "HAS_MESSAGE"),
@@ -77,6 +105,7 @@ TEXT_INDEXES: list[tuple[str, str]] = [
     ("KernelVersion", "Title"),
     ("DatasetVersion", "Title"),
     ("User", "DisplayName"),
+    ("Organization", "Name"),
 ]
 
 MISSING_HINT = "run `make kg-stage-all` first"

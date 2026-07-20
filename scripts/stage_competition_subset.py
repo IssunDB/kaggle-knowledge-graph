@@ -5,8 +5,12 @@ Scope (post-2020, curated):
 - Ranked or medal-winning teams in those competitions, plus their members and leaders.
 - Selected and leaderboard submissions for those teams (the meaningful scores).
 - Top kernels per competition by votes, with their competition-sourced versions and authors.
-- Discussion forums, topics, and messages attached to those competitions.
-- Tag taxonomy and the users implicated by any of the above.
+- Fork lineage between staged kernel versions.
+- Datasets and dataset versions used by the staged kernel versions.
+- Discussion forums, topics, and messages attached to those competitions, including each
+  team's write-up topic.
+- Tag taxonomy, host and dataset-owner organizations, and the users implicated by any of
+  the above.
 
 Library nodes and IMPORTS edges are produced separately by `parse_imports.py`, which
 reads `nodes_kernel_version.csv` from the same stage directory.
@@ -93,6 +97,8 @@ def create_seed_tables(
           AND coalesce(HostSegmentTitle, '') <> 'Community'
         """
     )
+    # Seed organizations are created after the dataset layer, because they
+    # include both competition hosts and dataset owners.
     # Seed teams: ranked or medal-winning teams in the seed competitions.
     con.execute(
         f"""
@@ -163,6 +169,40 @@ def create_seed_tables(
         JOIN seed_kernels k ON k.Id = kv.ScriptId
         """
     )
+    # Seed datasets: dataset versions used by the seed kernel versions.
+    con.execute(
+        f"""
+        CREATE OR REPLACE TEMP TABLE seed_dataset_versions AS
+        SELECT DISTINCT dv.*
+        FROM {csv(meta_dir, "DatasetVersions.csv")} dv
+        JOIN {csv(meta_dir, "KernelVersionDatasetSources.csv")} src
+          ON src.SourceDatasetVersionId = dv.Id
+        JOIN seed_kernel_versions kv ON kv.Id = src.KernelVersionId
+        """
+    )
+    con.execute(
+        """
+        CREATE OR REPLACE TEMP TABLE seed_dataset_ids AS
+        SELECT DISTINCT DatasetId AS Id
+        FROM seed_dataset_versions
+        WHERE DatasetId IS NOT NULL
+        """
+    )
+    # Seed organizations: competition hosts and dataset-owner organizations.
+    con.execute(
+        f"""
+        CREATE OR REPLACE TEMP TABLE seed_organization_ids AS
+        SELECT DISTINCT OrganizationId AS Id
+        FROM (
+            SELECT OrganizationId FROM seed_competitions
+            UNION ALL
+            SELECT d.OwnerOrganizationId AS OrganizationId
+            FROM {csv(meta_dir, "Datasets.csv")} d
+            JOIN seed_dataset_ids s ON d.Id = s.Id
+        )
+        WHERE OrganizationId IS NOT NULL
+        """
+    )
     # Seed discussion: forum topics and messages attached to the seed competitions.
     con.execute(
         f"""
@@ -196,6 +236,8 @@ def create_seed_tables(
             UNION ALL
             SELECT AuthorUserId AS UserId FROM seed_kernel_versions
             UNION ALL
+            SELECT CreatorUserId AS UserId FROM seed_dataset_versions
+            UNION ALL
             SELECT PostUserId AS UserId FROM seed_forum_messages
         )
         WHERE UserId IS NOT NULL
@@ -210,8 +252,9 @@ def stage_nodes(
         con,
         """
         SELECT Id, Slug, Title, Subtitle, HostSegmentTitle, HostName, ForumId, OrganizationId,
-               EnabledDate, DeadlineDate, EvaluationAlgorithmName, EvaluationAlgorithmIsMax,
-               RewardType, RewardQuantity, MaxTeamSize, TotalTeams, TotalCompetitors, TotalSubmissions
+               EnabledDate, DeadlineDate, EvaluationAlgorithmName, EvaluationAlgorithmDescription,
+               EvaluationAlgorithmIsMax, RewardType, RewardQuantity, MaxTeamSize,
+               TotalTeams, TotalCompetitors, TotalSubmissions, Overview, Rules, DatasetDescription
         FROM seed_competitions
         """,
         stage_dir / "nodes_competition.parquet",
@@ -255,12 +298,36 @@ def stage_nodes(
     )
     copy_parquet(
         con,
-        """
-        SELECT Id, ScriptId, VersionNumber, Title, CreationDate,
-               TotalLines, TotalVotes, IsInternetEnabled, RunningTimeInMilliseconds, DockerImage, AuthorUserId
-        FROM seed_kernel_versions
+        f"""
+        SELECT kv.Id, kv.ScriptId, kv.VersionNumber, kv.Title, kv.CreationDate, kv.TotalLines,
+               kv.TotalVotes, kv.IsInternetEnabled, kv.RunningTimeInMilliseconds, kv.DockerImage,
+               kv.AuthorUserId, kl.DisplayName AS ScriptLanguage, kat.Label AS AcceleratorType
+        FROM seed_kernel_versions kv
+        LEFT JOIN {csv(meta_dir, "KernelLanguages.csv")} kl ON kl.Id = kv.ScriptLanguageId
+        LEFT JOIN {csv(meta_dir, "KernelAcceleratorTypes.csv")} kat ON kat.Id = kv.AcceleratorTypeId
         """,
         stage_dir / "nodes_kernel_version.parquet",
+    )
+    copy_parquet(
+        con,
+        f"""
+        SELECT d.Id AS Id, CreatorUserId, OwnerUserId, OwnerOrganizationId, CurrentDatasetVersionId,
+               ForumId, Type, CreationDate, LastActivityDate, TotalViews, TotalDownloads,
+               TotalVotes, TotalKernels, Medal
+        FROM {csv(meta_dir, "Datasets.csv")} d
+        JOIN seed_dataset_ids s ON d.Id = s.Id
+        """,
+        stage_dir / "nodes_dataset.parquet",
+    )
+    copy_parquet(
+        con,
+        """
+        SELECT Id, DatasetId, CreatorUserId, LicenseName, CreationDate, VersionNumber,
+               Title, Slug, Subtitle, Description, VersionNotes,
+               TotalCompressedBytes, TotalUncompressedBytes
+        FROM seed_dataset_versions
+        """,
+        stage_dir / "nodes_dataset_version.parquet",
     )
     copy_parquet(
         con,
@@ -269,6 +336,15 @@ def stage_nodes(
         FROM {csv(meta_dir, "Tags.csv")}
         """,
         stage_dir / "nodes_tag.parquet",
+    )
+    copy_parquet(
+        con,
+        f"""
+        SELECT o.Id AS Id, Name, Slug, CreationDate, Description
+        FROM {csv(meta_dir, "Organizations.csv")} o
+        JOIN seed_organization_ids s ON o.Id = s.Id
+        """,
+        stage_dir / "nodes_organization.parquet",
     )
     copy_parquet(
         con,
@@ -324,6 +400,15 @@ def stage_edges(con: duckdb.DuckDBPyConnection, meta_dir: Path, stage_dir: Path)
         con,
         "SELECT TeamLeaderId AS from_user_id, Id AS to_team_id FROM seed_teams WHERE TeamLeaderId IS NOT NULL",
         stage_dir / "edges_user_led_team.parquet",
+    )
+    copy_parquet(
+        con,
+        """
+        SELECT Id AS from_team_id, WriteUpForumTopicId AS to_forum_topic_id
+        FROM seed_teams
+        WHERE WriteUpForumTopicId IS NOT NULL
+        """,
+        stage_dir / "edges_team_has_writeup_topic.parquet",
     )
     copy_parquet(
         con,
@@ -391,12 +476,83 @@ def stage_edges(con: duckdb.DuckDBPyConnection, meta_dir: Path, stage_dir: Path)
     copy_parquet(
         con,
         f"""
+        SELECT src.KernelVersionId AS from_kernel_version_id,
+               src.SourceKernelVersionId AS to_kernel_version_id
+        FROM {csv(meta_dir, "KernelVersionKernelSources.csv")} src
+        JOIN seed_kernel_versions kv ON kv.Id = src.KernelVersionId
+        JOIN seed_kernel_versions kv2 ON kv2.Id = src.SourceKernelVersionId
+        """,
+        stage_dir / "edges_kernel_version_forked_from.parquet",
+    )
+    copy_parquet(
+        con,
+        f"""
         SELECT src.KernelVersionId AS from_kernel_version_id, src.SourceCompetitionId AS to_competition_id
         FROM {csv(meta_dir, "KernelVersionCompetitionSources.csv")} src
         JOIN seed_kernel_versions kv ON kv.Id = src.KernelVersionId
         JOIN seed_competitions c ON c.Id = src.SourceCompetitionId
         """,
         stage_dir / "edges_kernel_version_uses_competition.parquet",
+    )
+    # Dataset layer.
+    copy_parquet(
+        con,
+        f"""
+        SELECT src.KernelVersionId AS from_kernel_version_id,
+               src.SourceDatasetVersionId AS to_dataset_version_id
+        FROM {csv(meta_dir, "KernelVersionDatasetSources.csv")} src
+        JOIN seed_kernel_versions kv ON kv.Id = src.KernelVersionId
+        JOIN seed_dataset_versions dv ON dv.Id = src.SourceDatasetVersionId
+        """,
+        stage_dir / "edges_kernel_version_uses_dataset_version.parquet",
+    )
+    copy_parquet(
+        con,
+        """
+        SELECT DatasetId AS from_dataset_id, Id AS to_dataset_version_id
+        FROM seed_dataset_versions
+        WHERE DatasetId IS NOT NULL
+        """,
+        stage_dir / "edges_dataset_has_version.parquet",
+    )
+    copy_parquet(
+        con,
+        f"""
+        SELECT d.Id AS from_dataset_id, d.CurrentDatasetVersionId AS to_dataset_version_id
+        FROM {csv(meta_dir, "Datasets.csv")} d
+        JOIN seed_dataset_ids s ON d.Id = s.Id
+        JOIN seed_dataset_versions dv ON dv.Id = d.CurrentDatasetVersionId
+        """,
+        stage_dir / "edges_dataset_current_version.parquet",
+    )
+    copy_parquet(
+        con,
+        f"""
+        SELECT d.Id AS from_dataset_id, d.OwnerOrganizationId AS to_organization_id
+        FROM {csv(meta_dir, "Datasets.csv")} d
+        JOIN seed_dataset_ids s ON d.Id = s.Id
+        WHERE d.OwnerOrganizationId IS NOT NULL
+        """,
+        stage_dir / "edges_dataset_owned_by_organization.parquet",
+    )
+    copy_parquet(
+        con,
+        """
+        SELECT Id AS from_competition_id, OrganizationId AS to_organization_id
+        FROM seed_competitions
+        WHERE OrganizationId IS NOT NULL
+        """,
+        stage_dir / "edges_competition_has_organization.parquet",
+    )
+    copy_parquet(
+        con,
+        f"""
+        SELECT uo.UserId AS from_user_id, uo.OrganizationId AS to_organization_id
+        FROM {csv(meta_dir, "UserOrganizations.csv")} uo
+        JOIN seed_user_ids u ON u.Id = uo.UserId
+        JOIN seed_organization_ids o ON o.Id = uo.OrganizationId
+        """,
+        stage_dir / "edges_user_member_of_organization.parquet",
     )
     # Tags.
     copy_parquet(
@@ -407,6 +563,15 @@ def stage_edges(con: duckdb.DuckDBPyConnection, meta_dir: Path, stage_dir: Path)
         JOIN seed_kernels k ON k.Id = kt.KernelId
         """,
         stage_dir / "edges_kernel_tagged_with_tag.parquet",
+    )
+    copy_parquet(
+        con,
+        f"""
+        SELECT dt.DatasetId AS from_dataset_id, dt.TagId AS to_tag_id
+        FROM {csv(meta_dir, "DatasetTags.csv")} dt
+        JOIN seed_dataset_ids d ON d.Id = dt.DatasetId
+        """,
+        stage_dir / "edges_dataset_tagged_with_tag.parquet",
     )
     copy_parquet(
         con,

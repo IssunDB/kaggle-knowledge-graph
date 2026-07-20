@@ -35,14 +35,19 @@ digraph KaggleKnowledgeGraphPropertySchema {
     Kernel        [label = "Kernel",        fillcolor = "#e0e7ff", color = "#3730a3", fontcolor = "#3730a3"]
     KernelVersion [label = "KernelVersion", fillcolor = "#ede9fe", color = "#6d28d9", fontcolor = "#6d28d9"]
     Library       [label = "Library",       fillcolor = "#fef08a", color = "#854d0e", fontcolor = "#854d0e"]
+    ApiCall       [label = "ApiCall",       fillcolor = "#fee2e2", color = "#b91c1c", fontcolor = "#b91c1c"]
+    Dataset       [label = "Dataset",       fillcolor = "#dcfce7", color = "#15803d", fontcolor = "#15803d"]
+    DatasetVersion [label = "DatasetVersion", fillcolor = "#f0fdf4", color = "#166534", fontcolor = "#166534", fontsize = 10]
     Tag           [label = "Tag",           fillcolor = "#d1fae5", color = "#047857", fontcolor = "#047857"]
     Forum         [label = "Forum",         fillcolor = "#ccfbf1", color = "#0f766e", fontcolor = "#0f766e"]
     ForumTopic    [label = "ForumTopic",    fillcolor = "#cffafe", color = "#0369a1", fontcolor = "#0369a1"]
     ForumMessage  [label = "ForumMessage",  fillcolor = "#e0f2fe", color = "#0284c7", fontcolor = "#0284c7"]
+    Organization  [label = "Organization",  fillcolor = "#f3e8ff", color = "#7e22ce", fontcolor = "#7e22ce"]
 
     // Competition & Team relationships
     Team -> Competition [label = "COMPETED_IN"]
     User -> Team [label = "MEMBER_OF_TEAM\nLED_TEAM"]
+    Team -> ForumTopic [label = "HAS_WRITEUP"]
 
     // Submission relationships
     Submission -> Team [label = "FOR_TEAM"]
@@ -54,8 +59,16 @@ digraph KaggleKnowledgeGraphPropertySchema {
     User -> Kernel [label = "AUTHORED_KERNEL"]
     Kernel -> KernelVersion [label = "HAS_VERSION\nCURRENT_VERSION"]
     KernelVersion -> User [label = "AUTHORED_BY"]
+    KernelVersion -> KernelVersion [label = "FORKED_FROM"]
     KernelVersion -> Competition [label = "USES_COMPETITION"]
     KernelVersion -> Library [label = "IMPORTS"]
+    KernelVersion -> ApiCall [label = "CALLS"]
+    ApiCall -> Library [label = "IN_LIBRARY"]
+
+    // Dataset relationships
+    KernelVersion -> DatasetVersion [label = "USES_DATASET_VERSION"]
+    Dataset -> DatasetVersion [label = "HAS_VERSION\nCURRENT_VERSION"]
+    Dataset -> Organization [label = "OWNED_BY_ORGANIZATION"]
 
     // Discussion Forum relationships
     Competition -> Forum [label = "HAS_FORUM"]
@@ -67,4 +80,9 @@ digraph KaggleKnowledgeGraphPropertySchema {
     // Tag taxonomy relationships
     Kernel -> Tag [label = "TAGGED_WITH"]
     Competition -> Tag [label = "TAGGED_WITH"]
+    Dataset -> Tag [label = "TAGGED_WITH"]
+
+    // Organization relationships
+    Competition -> Organization [label = "HAS_ORGANIZATION"]
+    User -> Organization [label = "MEMBER_OF_ORGANIZATION"]
 }

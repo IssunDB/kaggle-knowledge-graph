@@ -102,6 +102,35 @@ digraph KaggleKnowledgeGraphRelationalSchema {
 <tr><td align="left" bgcolor="#ffffff"><font color="#334155">Name : string</font></td></tr>
 </table>>]
 
+    // ApiCall table
+    ApiCall [label = <<table border="0" cellborder="1" cellspacing="0" cellpadding="5" color="#b91c1c">
+<tr><td bgcolor="#fee2e2"><b><font color="#b91c1c">ApiCall</font></b></td></tr>
+<tr><td align="left" bgcolor="#ffffff"><font color="#0f172a">Id : string (PK)</font></td></tr>
+<tr><td align="left" bgcolor="#ffffff"><font color="#334155">Library : string (FK)</font></td></tr>
+</table>>]
+
+    // Dataset table
+    Dataset [label = <<table border="0" cellborder="1" cellspacing="0" cellpadding="5" color="#15803d">
+<tr><td bgcolor="#dcfce7"><b><font color="#15803d">Dataset</font></b></td></tr>
+<tr><td align="left" bgcolor="#ffffff"><font color="#0f172a">Id : int (PK)</font></td></tr>
+<tr><td align="left" bgcolor="#ffffff"><font color="#334155">CreatorUserId : int (FK)</font></td></tr>
+<tr><td align="left" bgcolor="#ffffff"><font color="#334155">OwnerOrganizationId : int (FK)</font></td></tr>
+<tr><td align="left" bgcolor="#ffffff"><font color="#334155">CurrentDatasetVersionId : int (FK)</font></td></tr>
+<tr><td align="left" bgcolor="#ffffff"><font color="#334155">CreationDate : datetime</font></td></tr>
+<tr><td align="left" bgcolor="#ffffff"><font color="#334155">TotalVotes : int</font></td></tr>
+</table>>]
+
+    // DatasetVersion table
+    DatasetVersion [label = <<table border="0" cellborder="1" cellspacing="0" cellpadding="5" color="#166534">
+<tr><td bgcolor="#f0fdf4"><b><font color="#166534">DatasetVersion</font></b></td></tr>
+<tr><td align="left" bgcolor="#ffffff"><font color="#0f172a">Id : int (PK)</font></td></tr>
+<tr><td align="left" bgcolor="#ffffff"><font color="#334155">DatasetId : int (FK)</font></td></tr>
+<tr><td align="left" bgcolor="#ffffff"><font color="#334155">CreatorUserId : int (FK)</font></td></tr>
+<tr><td align="left" bgcolor="#ffffff"><font color="#334155">LicenseName : string</font></td></tr>
+<tr><td align="left" bgcolor="#ffffff"><font color="#334155">VersionNumber : int</font></td></tr>
+<tr><td align="left" bgcolor="#ffffff"><font color="#334155">Title : string</font></td></tr>
+</table>>]
+
     // Tag table
     Tag [label = <<table border="0" cellborder="1" cellspacing="0" cellpadding="5" color="#047857">
 <tr><td bgcolor="#d1fae5"><b><font color="#047857">Tag</font></b></td></tr>
@@ -140,9 +169,18 @@ digraph KaggleKnowledgeGraphRelationalSchema {
 <tr><td align="left" bgcolor="#ffffff"><font color="#334155">Message : text</font></td></tr>
 </table>>]
 
+    // Organization table
+    Organization [label = <<table border="0" cellborder="1" cellspacing="0" cellpadding="5" color="#7e22ce">
+<tr><td bgcolor="#f3e8ff"><b><font color="#7e22ce">Organization</font></b></td></tr>
+<tr><td align="left" bgcolor="#ffffff"><font color="#0f172a">Id : int (PK)</font></td></tr>
+<tr><td align="left" bgcolor="#ffffff"><font color="#334155">Name : string</font></td></tr>
+<tr><td align="left" bgcolor="#ffffff"><font color="#334155">Slug : string</font></td></tr>
+</table>>]
+
     // Foreign Key Relationships
     Team -> Competition [label = "CompetitionId"]
     User -> Team [label = "Member / Leader"]
+    Team -> ForumTopic [label = "WriteUpForumTopicId"]
     Submission -> Team [label = "TeamId"]
     Submission -> User [label = "SubmittedUserId"]
     Submission -> KernelVersion [label = "SourceKernelVersionId"]
@@ -151,7 +189,14 @@ digraph KaggleKnowledgeGraphRelationalSchema {
     Kernel -> KernelVersion [label = "CurrentVersionId"]
     KernelVersion -> Kernel [label = "ScriptId"]
     KernelVersion -> User [label = "AuthorUserId"]
+    KernelVersion -> KernelVersion [label = "SourceKernelVersionId"]
     KernelVersion -> Library [label = "Imports"]
+    KernelVersion -> ApiCall [label = "Calls"]
+    ApiCall -> Library [label = "Library"]
+    KernelVersion -> DatasetVersion [label = "SourceDatasetVersionId"]
+    DatasetVersion -> Dataset [label = "DatasetId"]
+    Dataset -> DatasetVersion [label = "CurrentDatasetVersionId"]
+    Dataset -> Organization [label = "OwnerOrganizationId"]
 
     Competition -> Forum [label = "ForumId"]
     ForumTopic -> Forum [label = "ForumId"]
@@ -161,4 +206,8 @@ digraph KaggleKnowledgeGraphRelationalSchema {
 
     Kernel -> Tag [label = "Tagged"]
     Competition -> Tag [label = "Tagged"]
+    Dataset -> Tag [label = "Tagged"]
+
+    Competition -> Organization [label = "OrganizationId"]
+    User -> Organization [label = "Member"]
 }

@@ -109,6 +109,8 @@ def meta_dir(tmp_path: Path) -> Path:
                 "RunningTimeInMilliseconds": 1000,
                 "DockerImage": "img1",
                 "AuthorUserId": 100,
+                "ScriptLanguageId": 1,
+                "AcceleratorTypeId": "",
             },
             {
                 "Id": 21,
@@ -122,6 +124,8 @@ def meta_dir(tmp_path: Path) -> Path:
                 "RunningTimeInMilliseconds": 500,
                 "DockerImage": "img1",
                 "AuthorUserId": 101,
+                "ScriptLanguageId": 2,
+                "AcceleratorTypeId": 5,
             },
             {
                 "Id": 41,
@@ -133,6 +137,8 @@ def meta_dir(tmp_path: Path) -> Path:
                 "TotalVotes": 1,
                 "IsInternetEnabled": False,
                 "RunningTimeInMilliseconds": 100,
+                "ScriptLanguageId": 1,
+                "AcceleratorTypeId": "",
                 "DockerImage": "img1",
                 "AuthorUserId": 100,
             },
@@ -176,7 +182,7 @@ def meta_dir(tmp_path: Path) -> Path:
                 "Id": 50,
                 "CreatorUserId": 100,
                 "OwnerUserId": 100,
-                "OwnerOrganizationId": "",
+                "OwnerOrganizationId": 200,
                 "CurrentDatasetVersionId": 501,
                 "ForumId": "",
                 "Type": 1,
@@ -204,6 +210,8 @@ def meta_dir(tmp_path: Path) -> Path:
                 "Title": "Housing Data",
                 "Slug": "housing-data",
                 "Subtitle": "",
+                "Description": 'Homes with "great" views.\nSee the notebook.',
+                "VersionNotes": "Initial release",
                 "TotalCompressedBytes": 1000,
                 "TotalUncompressedBytes": 2000,
             },
@@ -217,6 +225,8 @@ def meta_dir(tmp_path: Path) -> Path:
                 "Title": "Unreferenced Data",
                 "Slug": "unreferenced-data",
                 "Subtitle": "",
+                "Description": "",
+                "VersionNotes": "",
                 "TotalCompressedBytes": 1000,
                 "TotalUncompressedBytes": 2000,
             },
@@ -229,6 +239,52 @@ def meta_dir(tmp_path: Path) -> Path:
     )
     write_csv(
         directory,
+        "KernelVersionKernelSources.csv",
+        [
+            {"KernelVersionId": 21, "SourceKernelVersionId": 11},
+            {"KernelVersionId": 41, "SourceKernelVersionId": 11},
+        ],
+    )
+    write_csv(
+        directory,
+        "KernelLanguages.csv",
+        [
+            {"Id": 1, "Name": "python", "DisplayName": "Python", "IsNotebook": True},
+            {"Id": 2, "Name": "r", "DisplayName": "R", "IsNotebook": True},
+        ],
+    )
+    write_csv(
+        directory,
+        "KernelAcceleratorTypes.csv",
+        [{"Id": 5, "Label": "GPU"}],
+    )
+    write_csv(
+        directory,
+        "Organizations.csv",
+        [
+            {
+                "Id": 200,
+                "Name": "Acme Data Co",
+                "Slug": "acme-data-co",
+                "CreationDate": "2019-01-01",
+                "Description": "A data organization.",
+            },
+            {
+                "Id": 201,
+                "Name": "Unreferenced Org",
+                "Slug": "unreferenced-org",
+                "CreationDate": "2019-01-01",
+                "Description": "",
+            },
+        ],
+    )
+    write_csv(
+        directory,
+        "UserOrganizations.csv",
+        [{"Id": 1, "UserId": 100, "OrganizationId": 200, "JoinDate": "2019-06-01"}],
+    )
+    write_csv(
+        directory,
         "Competitions.csv",
         [
             {
@@ -238,15 +294,20 @@ def meta_dir(tmp_path: Path) -> Path:
                 "Subtitle": "",
                 "HostSegmentTitle": "Featured",
                 "ForumId": 900,
+                "OrganizationId": 200,
                 "EnabledDate": "01/01/2021 00:00:00",
                 "DeadlineDate": "06/01/2021 00:00:00",
                 "EvaluationAlgorithmName": "AUC",
+                "EvaluationAlgorithmDescription": "Area under the curve.",
                 "EvaluationAlgorithmIsMax": True,
                 "RewardType": "USD",
                 "RewardQuantity": 1000,
                 "TotalTeams": 5,
                 "TotalCompetitors": 5,
                 "TotalSubmissions": 10,
+                "Overview": 'Predict "house prices" from tabular data.',
+                "Rules": "Standard rules apply.\nNo external data.",
+                "DatasetDescription": "A tabular housing dataset.",
             },
             {
                 "Id": 2,
@@ -255,15 +316,20 @@ def meta_dir(tmp_path: Path) -> Path:
                 "Subtitle": "",
                 "HostSegmentTitle": "Featured",
                 "ForumId": 901,
+                "OrganizationId": "",
                 "EnabledDate": "01/01/2021 00:00:00",
                 "DeadlineDate": "06/01/2021 00:00:00",
                 "EvaluationAlgorithmName": "AUC",
+                "EvaluationAlgorithmDescription": "",
                 "EvaluationAlgorithmIsMax": True,
                 "RewardType": "USD",
                 "RewardQuantity": 1000,
                 "TotalTeams": 5,
                 "TotalCompetitors": 5,
                 "TotalSubmissions": 10,
+                "Overview": "",
+                "Rules": "",
+                "DatasetDescription": "",
             },
         ],
     )
@@ -530,3 +596,85 @@ class TestEdges:
             zip(edges["from_kernel_version_id"], edges["to_dataset_version_id"], strict=True)
         )
         assert pairs == {(11, 501)}
+
+    def test_forked_from_edge_requires_both_endpoints_staged(
+        self, meta_dir: Path, tmp_path: Path
+    ) -> None:
+        stage_dir = tmp_path / "stage"
+        # kernel_limit=2 excludes KV41 (ScriptId=4), so only the 21 -> 11 fork
+        # (both staged) should survive; 41 -> 11 has an unresolved source endpoint.
+        _run_pipeline(meta_dir, stage_dir, kernel_limit=2)
+        edges = pl.read_parquet(stage_dir / "edges_kernel_version_forked_from.parquet")
+        pairs = set(
+            zip(edges["from_kernel_version_id"], edges["to_kernel_version_id"], strict=True)
+        )
+        assert pairs == {(21, 11)}
+
+    def test_competition_has_organization_edge(self, meta_dir: Path, tmp_path: Path) -> None:
+        stage_dir = tmp_path / "stage"
+        _run_pipeline(meta_dir, stage_dir)
+        edges = pl.read_parquet(stage_dir / "edges_competition_has_organization.parquet")
+        pairs = set(zip(edges["from_competition_id"], edges["to_organization_id"], strict=True))
+        assert pairs == {(1, 200)}
+
+    def test_dataset_owned_by_organization_edge(self, meta_dir: Path, tmp_path: Path) -> None:
+        stage_dir = tmp_path / "stage"
+        _run_pipeline(meta_dir, stage_dir)
+        edges = pl.read_parquet(stage_dir / "edges_dataset_owned_by_organization.parquet")
+        pairs = set(zip(edges["from_dataset_id"], edges["to_organization_id"], strict=True))
+        assert pairs == {(50, 200)}
+
+    def test_user_member_of_organization_edge(self, meta_dir: Path, tmp_path: Path) -> None:
+        stage_dir = tmp_path / "stage"
+        _run_pipeline(meta_dir, stage_dir)
+        edges = pl.read_parquet(stage_dir / "edges_user_member_of_organization.parquet")
+        pairs = set(zip(edges["from_user_id"], edges["to_organization_id"], strict=True))
+        assert pairs == {(100, 200)}
+
+
+class TestOrganizationNode:
+    def test_only_referenced_organizations_are_staged(self, meta_dir: Path, tmp_path: Path) -> None:
+        stage_dir = tmp_path / "stage"
+        _run_pipeline(meta_dir, stage_dir)
+        organizations = pl.read_parquet(stage_dir / "nodes_organization.parquet")
+        assert set(organizations["Id"]) == {200}
+        assert organizations["Name"][0] == "Acme Data Co"
+
+
+class TestLanguageAndAcceleratorDenormalization:
+    def test_kernel_version_carries_language_and_accelerator_labels(
+        self, meta_dir: Path, tmp_path: Path
+    ) -> None:
+        stage_dir = tmp_path / "stage"
+        _run_pipeline(meta_dir, stage_dir)
+        versions = pl.read_parquet(stage_dir / "nodes_kernel_version.parquet")
+        kv11 = versions.filter(pl.col("Id") == 11)
+        kv21 = versions.filter(pl.col("Id") == 21)
+        assert kv11["ScriptLanguage"][0] == "Python"
+        assert kv11["AcceleratorType"][0] is None
+        assert kv21["ScriptLanguage"][0] == "R"
+        assert kv21["AcceleratorType"][0] == "GPU"
+
+
+class TestLongFormText:
+    def test_competition_overview_rules_and_dataset_description_are_staged(
+        self, meta_dir: Path, tmp_path: Path
+    ) -> None:
+        stage_dir = tmp_path / "stage"
+        _run_pipeline(meta_dir, stage_dir)
+        competitions = pl.read_parquet(stage_dir / "nodes_competition.parquet")
+        row = competitions.filter(pl.col("Id") == 1)
+        assert row["Overview"][0] == 'Predict "house prices" from tabular data.'
+        assert row["Rules"][0] == "Standard rules apply.\nNo external data."
+        assert row["DatasetDescription"][0] == "A tabular housing dataset."
+        assert row["EvaluationAlgorithmDescription"][0] == "Area under the curve."
+
+    def test_dataset_version_description_and_notes_are_staged(
+        self, meta_dir: Path, tmp_path: Path
+    ) -> None:
+        stage_dir = tmp_path / "stage"
+        _run_pipeline(meta_dir, stage_dir)
+        versions = pl.read_parquet(stage_dir / "nodes_dataset_version.parquet")
+        row = versions.filter(pl.col("Id") == 501)
+        assert row["Description"][0] == 'Homes with "great" views.\nSee the notebook.'
+        assert row["VersionNotes"][0] == "Initial release"

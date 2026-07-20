@@ -6,13 +6,13 @@ This file provides guidance to coding agents collaborating on this repository.
 
 This project builds graph databases from the [Meta Kaggle](https://www.kaggle.com/datasets/kaggle/meta-kaggle) dataset and loads them
 into [IssunDB](https://github.com/habedi/issun-db), an embedded graph database.
-The pipeline stages source files with DuckDB, parses code imports with Polars, and bulk-loads nodes and edges through the IssunDB CLI.
+The pipeline stages source files with DuckDB, parses code imports with Polars, parses Python API calls with Tree-sitter, and bulk-loads nodes and edges through the IssunDB CLI.
 The project priorities include correct graph construction, reproducible builds, scoped subset testing, and idiomatic Python.
 
 ## Core Rules
 
 - Use English for code, comments, documentation, and tests.
-- Stage with DuckDB, parse code with Polars, and load through the IssunDB command line interface. Do not mix these roles.
+- Stage with DuckDB, parse code imports with Polars, parse Python API calls with Tree-sitter, and load through the IssunDB command line interface. Do not mix these roles.
 - Bulk-load nodes and edges with command line tools instead of Cypher queries.
 - Keep the large local source data out of the repository.
 - Ensure staging is deterministic by using a fixed seed rule and fixed source data.
@@ -45,6 +45,7 @@ The project priorities include correct graph construction, reproducible builds, 
 - `scripts/stage_kernel_subset.py` stages top-voted kernels.
 - `scripts/stage_competition_subset.py` stages competition metadata.
 - `scripts/parse_imports.py` parses code imports.
+- `scripts/parse_api_calls.py` parses Python API calls into `ApiCall` nodes and `CALLS` edges.
 - `scripts/load_competition_kg.py` loads the Kaggle knowledge graph.
 - `scripts/import_to_issundb.py` loads the kernel graph.
 - `scripts/issundb_load.py` holds the loader logic shared by both load scripts.

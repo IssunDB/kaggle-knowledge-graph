@@ -80,7 +80,10 @@ class TestValidate:
         assert any("imported 1 nodes, expected 2 staged rows" in f for f in failures)
 
     def test_flags_malformed_edge_rows(self) -> None:
-        log = "imported 1 SELF edges from /tmp/edges_a.parquet (0 unresolved endpoint(s), 2 malformed row(s))\n"
+        log = (
+            "imported 1 SELF edges from /tmp/edges_a.parquet "
+            "(0 unresolved endpoint(s), 2 malformed row(s))\n"
+        )
         failures = il.validate(log, {})
         assert any("2 malformed edge row(s)" in f for f in failures)
 

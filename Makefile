@@ -110,8 +110,12 @@ kg-stage-with-message-text: ## Stage subset and include forum message text colum
 kg-parse-imports: ## Parse imports from Meta Kaggle Code for staged kernel versions
 	META_KAGGLE_CODE_DIR="$(META_KAGGLE_CODE_DIR)" STAGE_DIR="$(STAGE_DIR)" .venv/bin/python scripts/parse_imports.py
 
+.PHONY: kg-parse-api-calls
+kg-parse-api-calls: ## Parse Python API calls from Meta Kaggle Code for staged kernel versions
+	META_KAGGLE_CODE_DIR="$(META_KAGGLE_CODE_DIR)" STAGE_DIR="$(STAGE_DIR)" .venv/bin/python scripts/parse_api_calls.py
+
 .PHONY: kg-stage-all
-kg-stage-all: kg-stage kg-parse-imports ## Stage metadata and parsed import edges
+kg-stage-all: kg-stage kg-parse-imports kg-parse-api-calls ## Stage metadata, parsed import edges, and parsed API call edges
 
 .PHONY: kg-load
 kg-load: ## Load the staged kernel subset, add constraints and indexes, and validate
@@ -138,12 +142,16 @@ comp-stage: ## Stage the post-2020 competition subset (with forum message text)
 comp-parse-imports: ## Parse library imports for the staged competition kernel versions
 	META_KAGGLE_CODE_DIR="$(META_KAGGLE_CODE_DIR)" .venv/bin/python scripts/parse_imports.py --stage-dir "$(COMP_STAGE_DIR)"
 
+.PHONY: comp-parse-api-calls
+comp-parse-api-calls: ## Parse Python API calls for the staged competition kernel versions
+	META_KAGGLE_CODE_DIR="$(META_KAGGLE_CODE_DIR)" .venv/bin/python scripts/parse_api_calls.py --stage-dir "$(COMP_STAGE_DIR)"
+
 .PHONY: comp-load
 comp-load: ## Load the staged competition subset, add constraints and indexes, and validate
 	.venv/bin/python scripts/load_competition_kg.py --stage-dir "$(COMP_STAGE_DIR)" --db "$(COMP_DB)" --cli "$(ISSUNDB_CLI)" --map-size-gb $(MAP_SIZE_GB)
 
 .PHONY: graph-kc
-graph-kc: kg-inspect comp-stage comp-parse-imports comp-load ## Build the Kaggle knowledge graph end to end into $(COMP_DB)
+graph-kc: kg-inspect comp-stage comp-parse-imports comp-parse-api-calls comp-load ## Build the Kaggle knowledge graph end to end into $(COMP_DB)
 	@echo "comp-kg ready at $(COMP_DB)"
 
 .PHONY: comp-cli
