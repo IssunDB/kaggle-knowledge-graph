@@ -63,23 +63,6 @@ Replace `/path/to/kaggle-knowledge-graph` with the absolute path to your reposit
 
 #### Knowledge Graph Schema
 
-Both graphs share a code layer parsed from the Meta Kaggle Code dataset. Each staged kernel
-version links to the libraries it imports through `IMPORTS` edges, and to the qualified
-Python API calls it makes (for example, `sklearn.ensemble.RandomForestClassifier`) through
-`CALLS` edges. Each `ApiCall` node links back to its `Library` node through an `IN_LIBRARY`
-edge. The competition graph also stages the datasets and dataset versions used by its
-kernel versions, so leaderboard results, code, and data sources are connected in one graph.
-
-##### Property Graph Model
-
-<div align="center">
-  <picture>
-    <img alt="PG Schema" src="docs/assets/diagrams/schema-pg.svg" height="100%" width="100%">
-  </picture>
-</div>
-
-##### Relational Model
-
 <div align="center">
   <picture>
     <img alt="Relational Schema" src="docs/assets/diagrams/schema-rel.svg" height="100%" width="100%">

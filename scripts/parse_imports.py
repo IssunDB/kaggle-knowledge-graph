@@ -12,7 +12,9 @@ from typing import Any
 import polars as pl
 
 DEFAULT_CODE_DIR = Path(
-    os.environ.get("META_KAGGLE_CODE_DIR", "/home/hassan/Downloads/KW/meta-kaggle-code")
+    os.environ.get(
+        "META_KAGGLE_CODE_DIR", str(Path.home() / "Downloads" / "KW" / "meta-kaggle-code")
+    )
 )
 DEFAULT_STAGE_DIR = Path(os.environ.get("STAGE_DIR", "stage"))
 
