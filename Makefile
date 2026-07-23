@@ -2,7 +2,7 @@
 PYTHON      ?= python3
 PIP         ?= pip3
 DEP_MNGR    ?= uv
-META_KAGGLE_DIR ?= /media/data/home/downloads/KW/meta-kaggle
+META_KAGGLE_DIR ?= ~/downloads/KW/meta-kaggle
 META_KAGGLE_CODE_DIR ?= ~/Downloads/KW/meta-kaggle-code
 STAGE_DIR ?= stage
 KERNEL_LIMIT ?= 10000

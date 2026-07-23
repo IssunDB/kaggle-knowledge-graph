@@ -9,7 +9,7 @@ from pathlib import Path
 import duckdb
 
 DEFAULT_META_DIR = Path(
-    os.environ.get("META_KAGGLE_DIR", "/media/data/home/downloads/KW/meta-kaggle")
+    os.environ.get("META_KAGGLE_DIR", str(Path.home() / "downloads" / "KW" / "meta-kaggle"))
 )
 DEFAULT_OUTPUT = Path("databases/metadata_inventory.md")
 
