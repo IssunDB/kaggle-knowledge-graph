@@ -54,8 +54,24 @@ def csv(meta_dir: Path, name: str) -> str:
 
 
 def copy_parquet(con: duckdb.DuckDBPyConnection, query: str, output: Path) -> None:
+    """Write `query` to a Parquet file, ordered by its first column.
+
+    Every node query selects `Id` first and every edge query selects its source
+    first, so one `ORDER BY 1` sorts both usefully. It is a load-time
+    optimization rather than a cosmetic one, and the two halves only pay off
+    together: the importer allocates node ids in file order, so sorting the node
+    files makes an IssunDB id ascend with the domain `Id`, and sorting the edge
+    files by source then makes the `out_adj` writes land in ascending key order
+    instead of scattering across the tree. Measured on a synthetic 1 M-node,
+    4 M-edge graph, that took the edge phase from 19.5 s to 14.0 s.
+
+    Sorting costs a little here, where DuckDB is doing it over a columnar batch,
+    and saves more there, where the alternative is random B-tree page access.
+    """
     output.parent.mkdir(parents=True, exist_ok=True)
-    con.execute(f"COPY ({query}) TO {sql_literal(output)} (FORMAT PARQUET)")
+    con.execute(
+        f"COPY (SELECT * FROM ({query}) ORDER BY 1) TO {sql_literal(output)} (FORMAT PARQUET)"
+    )
 
 
 def warn_on_unparseable_enabled_dates(con: duckdb.DuckDBPyConnection, meta_dir: Path) -> None:
