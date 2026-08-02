@@ -14,7 +14,7 @@ COMP_DB ?= databases/comp-kg
 KERNELS_PER_COMPETITION ?= 50
 ISSUNDB_CLI ?= bin/issundb-cli
 ISSUNDB_MCP ?= bin/issundb-mcp
-MAP_SIZE_GB ?= 8
+MAP_SIZE_GB ?= 16
 
 # Kernel knowledge graph build settings
 KERNEL_DB ?= databases/kernel-kg
