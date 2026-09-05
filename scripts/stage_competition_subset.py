@@ -1,4 +1,4 @@
-"""Stage a competition-centered Meta Kaggle subset as node and edge CSVs.
+"""Stage a competition-centered Meta Kaggle subset as node and edge Parquet files.
 
 Scope (post-2020, curated):
 - Competitions enabled on or after 2020-01-01, excluding Community/in-class events.
@@ -13,7 +13,7 @@ Scope (post-2020, curated):
   the above.
 
 Library nodes and IMPORTS edges are produced separately by `parse_imports.py`, which
-reads `nodes_kernel_version.csv` from the same stage directory.
+reads `nodes_kernel_version.parquet` from the same stage directory.
 """
 
 from __future__ import annotations
@@ -180,7 +180,8 @@ def create_seed_tables(
         CREATE OR REPLACE TEMP TABLE seed_kernel_versions AS
         SELECT DISTINCT kv.*
         FROM {csv(meta_dir, "KernelVersions.csv")} kv
-        JOIN {csv(meta_dir, "KernelVersionCompetitionSources.csv")} src ON src.KernelVersionId = kv.Id
+        JOIN {csv(meta_dir, "KernelVersionCompetitionSources.csv")} src
+          ON src.KernelVersionId = kv.Id
         JOIN seed_competitions c ON c.Id = src.SourceCompetitionId
         JOIN seed_kernels k ON k.Id = kv.ScriptId
         """
@@ -216,7 +217,7 @@ def create_seed_tables(
             FROM {csv(meta_dir, "Datasets.csv")} d
             JOIN seed_dataset_ids s ON d.Id = s.Id
         )
-        WHERE OrganizationId IS NOT NULL
+        WHERE OrganizationId IN (SELECT Id FROM {csv(meta_dir, "Organizations.csv")})
         """
     )
     # Seed discussion: forum topics and messages attached to the seed competitions.
@@ -238,7 +239,7 @@ def create_seed_tables(
     )
     # Seed users: users associated with the teams, submissions, kernels, or discussion.
     con.execute(
-        """
+        f"""
         CREATE OR REPLACE TEMP TABLE seed_user_ids AS
         SELECT DISTINCT UserId AS Id
         FROM (
@@ -256,7 +257,7 @@ def create_seed_tables(
             UNION ALL
             SELECT PostUserId AS UserId FROM seed_forum_messages
         )
-        WHERE UserId IS NOT NULL
+        WHERE UserId IN (SELECT Id FROM {csv(meta_dir, "Users.csv")})
         """
     )
 
@@ -404,17 +405,29 @@ def stage_edges(con: duckdb.DuckDBPyConnection, meta_dir: Path, stage_dir: Path)
     # Participation and scores.
     copy_parquet(
         con,
-        "SELECT Id AS from_team_id, CompetitionId AS to_competition_id FROM seed_teams WHERE CompetitionId IS NOT NULL",
+        """
+        SELECT Id AS from_team_id, CompetitionId AS to_competition_id
+        FROM seed_teams
+        WHERE CompetitionId IS NOT NULL
+        """,
         stage_dir / "edges_team_competed_in_competition.parquet",
     )
     copy_parquet(
         con,
-        "SELECT UserId AS from_user_id, TeamId AS to_team_id FROM seed_team_memberships WHERE UserId IS NOT NULL",
+        """
+        SELECT UserId AS from_user_id, TeamId AS to_team_id
+        FROM seed_team_memberships
+        WHERE UserId IN (SELECT Id FROM seed_user_ids)
+        """,
         stage_dir / "edges_user_member_of_team.parquet",
     )
     copy_parquet(
         con,
-        "SELECT TeamLeaderId AS from_user_id, Id AS to_team_id FROM seed_teams WHERE TeamLeaderId IS NOT NULL",
+        """
+        SELECT TeamLeaderId AS from_user_id, Id AS to_team_id
+        FROM seed_teams
+        WHERE TeamLeaderId IN (SELECT Id FROM seed_user_ids)
+        """,
         stage_dir / "edges_user_led_team.parquet",
     )
     copy_parquet(
@@ -428,18 +441,27 @@ def stage_edges(con: duckdb.DuckDBPyConnection, meta_dir: Path, stage_dir: Path)
     )
     copy_parquet(
         con,
-        "SELECT Id AS from_submission_id, TeamId AS to_team_id FROM seed_submissions WHERE TeamId IS NOT NULL",
+        """
+        SELECT Id AS from_submission_id, TeamId AS to_team_id
+        FROM seed_submissions
+        WHERE TeamId IS NOT NULL
+        """,
         stage_dir / "edges_submission_for_team.parquet",
     )
     copy_parquet(
         con,
-        "SELECT SubmittedUserId AS from_user_id, Id AS to_submission_id FROM seed_submissions WHERE SubmittedUserId IS NOT NULL",
+        """
+        SELECT SubmittedUserId AS from_user_id, Id AS to_submission_id
+        FROM seed_submissions
+        WHERE SubmittedUserId IN (SELECT Id FROM seed_user_ids)
+        """,
         stage_dir / "edges_user_submitted.parquet",
     )
     copy_parquet(
         con,
         """
-        SELECT s.Id AS from_submission_id, cast(s.SourceKernelVersionId AS BIGINT) AS to_kernel_version_id
+        SELECT s.Id AS from_submission_id,
+               cast(s.SourceKernelVersionId AS BIGINT) AS to_kernel_version_id
         FROM seed_submissions s
         WHERE try_cast(s.SourceKernelVersionId AS BIGINT) IN (SELECT Id FROM seed_kernel_versions)
         """,
@@ -467,12 +489,20 @@ def stage_edges(con: duckdb.DuckDBPyConnection, meta_dir: Path, stage_dir: Path)
     # Code layer.
     copy_parquet(
         con,
-        "SELECT AuthorUserId AS from_user_id, Id AS to_kernel_id FROM seed_kernels WHERE AuthorUserId IS NOT NULL",
+        """
+        SELECT AuthorUserId AS from_user_id, Id AS to_kernel_id
+        FROM seed_kernels
+        WHERE AuthorUserId IN (SELECT Id FROM seed_user_ids)
+        """,
         stage_dir / "edges_user_authored_kernel.parquet",
     )
     copy_parquet(
         con,
-        "SELECT ScriptId AS from_kernel_id, Id AS to_kernel_version_id FROM seed_kernel_versions WHERE ScriptId IS NOT NULL",
+        """
+        SELECT ScriptId AS from_kernel_id, Id AS to_kernel_version_id
+        FROM seed_kernel_versions
+        WHERE ScriptId IS NOT NULL
+        """,
         stage_dir / "edges_kernel_has_version.parquet",
     )
     copy_parquet(
@@ -486,7 +516,11 @@ def stage_edges(con: duckdb.DuckDBPyConnection, meta_dir: Path, stage_dir: Path)
     )
     copy_parquet(
         con,
-        "SELECT Id AS from_kernel_version_id, AuthorUserId AS to_user_id FROM seed_kernel_versions WHERE AuthorUserId IS NOT NULL",
+        """
+        SELECT Id AS from_kernel_version_id, AuthorUserId AS to_user_id
+        FROM seed_kernel_versions
+        WHERE AuthorUserId IN (SELECT Id FROM seed_user_ids)
+        """,
         stage_dir / "edges_kernel_version_authored_by_user.parquet",
     )
     copy_parquet(
@@ -503,7 +537,8 @@ def stage_edges(con: duckdb.DuckDBPyConnection, meta_dir: Path, stage_dir: Path)
     copy_parquet(
         con,
         f"""
-        SELECT src.KernelVersionId AS from_kernel_version_id, src.SourceCompetitionId AS to_competition_id
+        SELECT src.KernelVersionId AS from_kernel_version_id,
+               src.SourceCompetitionId AS to_competition_id
         FROM {csv(meta_dir, "KernelVersionCompetitionSources.csv")} src
         JOIN seed_kernel_versions kv ON kv.Id = src.KernelVersionId
         JOIN seed_competitions c ON c.Id = src.SourceCompetitionId
@@ -547,7 +582,7 @@ def stage_edges(con: duckdb.DuckDBPyConnection, meta_dir: Path, stage_dir: Path)
         SELECT d.Id AS from_dataset_id, d.OwnerOrganizationId AS to_organization_id
         FROM {csv(meta_dir, "Datasets.csv")} d
         JOIN seed_dataset_ids s ON d.Id = s.Id
-        WHERE d.OwnerOrganizationId IS NOT NULL
+        WHERE d.OwnerOrganizationId IN (SELECT Id FROM seed_organization_ids)
         """,
         stage_dir / "edges_dataset_owned_by_organization.parquet",
     )
@@ -556,7 +591,7 @@ def stage_edges(con: duckdb.DuckDBPyConnection, meta_dir: Path, stage_dir: Path)
         """
         SELECT Id AS from_competition_id, OrganizationId AS to_organization_id
         FROM seed_competitions
-        WHERE OrganizationId IS NOT NULL
+        WHERE OrganizationId IN (SELECT Id FROM seed_organization_ids)
         """,
         stage_dir / "edges_competition_has_organization.parquet",
     )
@@ -601,28 +636,45 @@ def stage_edges(con: duckdb.DuckDBPyConnection, meta_dir: Path, stage_dir: Path)
     # Discussion.
     copy_parquet(
         con,
-        "SELECT Id AS from_competition_id, ForumId AS to_forum_id FROM seed_competitions WHERE ForumId IS NOT NULL",
+        """
+        SELECT Id AS from_competition_id, ForumId AS to_forum_id
+        FROM seed_competitions
+        WHERE ForumId IS NOT NULL
+        """,
         stage_dir / "edges_competition_has_forum.parquet",
     )
     copy_parquet(
         con,
-        "SELECT ForumId AS from_forum_id, Id AS to_forum_topic_id FROM seed_forum_topics WHERE ForumId IS NOT NULL",
+        """
+        SELECT ForumId AS from_forum_id, Id AS to_forum_topic_id
+        FROM seed_forum_topics
+        WHERE ForumId IS NOT NULL
+        """,
         stage_dir / "edges_forum_has_topic.parquet",
     )
     copy_parquet(
         con,
-        "SELECT ForumTopicId AS from_forum_topic_id, Id AS to_forum_message_id FROM seed_forum_messages WHERE ForumTopicId IS NOT NULL",
+        """
+        SELECT ForumTopicId AS from_forum_topic_id, Id AS to_forum_message_id
+        FROM seed_forum_messages
+        WHERE ForumTopicId IS NOT NULL
+        """,
         stage_dir / "edges_forum_topic_has_message.parquet",
     )
     copy_parquet(
         con,
-        "SELECT PostUserId AS from_user_id, Id AS to_forum_message_id FROM seed_forum_messages WHERE PostUserId IS NOT NULL",
+        """
+        SELECT PostUserId AS from_user_id, Id AS to_forum_message_id
+        FROM seed_forum_messages
+        WHERE PostUserId IN (SELECT Id FROM seed_user_ids)
+        """,
         stage_dir / "edges_user_posted_message.parquet",
     )
     copy_parquet(
         con,
         """
-        SELECT Id AS from_forum_message_id, cast(ReplyToForumMessageId AS BIGINT) AS to_forum_message_id
+        SELECT Id AS from_forum_message_id,
+               cast(ReplyToForumMessageId AS BIGINT) AS to_forum_message_id
         FROM seed_forum_messages
         WHERE try_cast(ReplyToForumMessageId AS BIGINT) IN (SELECT Id FROM seed_forum_messages)
         """,

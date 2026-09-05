@@ -71,6 +71,7 @@ construction, reproducible builds, scoped subset testing, and idiomatic Python.
 
 - Node files are `Id`-first. The `Id` column is auto-indexed. Edge files contain source and destination `Id` keys.
 - Unresolved edge endpoints are dropped. Malformed rows cause errors.
+- Staging only seeds users and organizations that have a row in `Users.csv` or `Organizations.csv`, and it filters every user and organization edge through those seed tables, so no staged edge points to a missing node.
 - Bulk loading must use `:import-edges` instead of Cypher `UNWIND ... CREATE` queries.
 - Node property lookups use auto-indexed full-text indexes. Raw markup language bodies must be searched with `CONTAINS` scans.
 - Cypher query lines take string literals verbatim.

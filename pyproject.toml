@@ -68,7 +68,7 @@ check_untyped_defs = true
 warn_return_any = true
 strict_optional = true
 warn_redundant_casts = true
-exclude = "^(benches/|examples/|tests/)"
+exclude = "^(benches/|examples/|tests/|tmp/)"
 
 [tool.ruff]
 exclude = [

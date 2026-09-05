@@ -1,7 +1,7 @@
 """Load the staged competition subset into an IssunDB database.
 
 This driver generates an IssunDB CLI script that bulk-imports the staged node and
-edge CSVs, declares uniqueness constraints and full-text indexes, rebuilds the CSR
+edge Parquet files, declares uniqueness constraints and full-text indexes, rebuilds the CSR
 snapshot, and prints statistics. It then runs the CLI, captures the log, and
 validates the load: every node file must import in full, no edge row may be
 malformed, and no command may error (a failed uniqueness constraint means the
@@ -23,7 +23,7 @@ from pathlib import Path
 
 from issundb_load import load_and_validate
 
-# Node CSV file names and the label each file's rows carry. Loaded before edges
+# Node Parquet file names and the label each file's rows carry. Loaded before edges
 # so the edge importer can resolve endpoints by the auto-indexed `Id` property.
 NODE_FILES: list[tuple[str, str]] = [
     ("nodes_competition.parquet", "Competition"),
@@ -43,7 +43,7 @@ NODE_FILES: list[tuple[str, str]] = [
     ("nodes_organization.parquet", "Organization"),
 ]
 
-# Edge CSV file names with their source label, destination label, and type.
+# Edge Parquet file names with their source label, destination label, and type.
 EDGE_FILES: list[tuple[str, str, str, str]] = [
     ("edges_team_competed_in_competition.parquet", "Team", "Competition", "COMPETED_IN"),
     ("edges_user_member_of_team.parquet", "User", "Team", "MEMBER_OF_TEAM"),

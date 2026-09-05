@@ -143,3 +143,25 @@ class TestMain:
         edges = pl.read_parquet(stage_dir / "edges_kernel_version_imports_library.parquet")
         assert set(edges["to_library_id"]) == {"os", "sys", "pandas"}
         assert set(edges["from_kernel_version_id"]) == {"1"}
+
+    def test_no_code_files_writes_typed_empty_outputs(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        stage_dir = tmp_path / "stage"
+        stage_dir.mkdir()
+        code_dir = tmp_path / "code"
+        code_dir.mkdir()
+        pl.DataFrame({"Id": [1]}).write_parquet(stage_dir / "nodes_kernel_version.parquet")
+
+        monkeypatch.setattr(
+            "sys.argv",
+            ["parse_imports.py", "--code-dir", str(code_dir), "--stage-dir", str(stage_dir)],
+        )
+        pi.main()
+
+        libraries = pl.read_parquet(stage_dir / "nodes_library.parquet")
+        edges = pl.read_parquet(stage_dir / "edges_kernel_version_imports_library.parquet")
+        assert libraries.height == 0
+        assert libraries.schema["Id"] == pl.Utf8
+        assert edges.schema["from_kernel_version_id"] == pl.Utf8
+        assert edges.schema["to_library_id"] == pl.Utf8

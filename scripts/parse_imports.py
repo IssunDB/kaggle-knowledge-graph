@@ -116,7 +116,9 @@ def main() -> None:
             for library in imported_libraries(text):
                 rows.append((kernel_version_id, library))
 
-    imports = pl.DataFrame(rows, schema=["KernelVersionId", "Library"], orient="row")
+    imports = pl.DataFrame(
+        rows, schema={"KernelVersionId": pl.Utf8, "Library": pl.Utf8}, orient="row"
+    )
     imports = imports.unique().sort(["KernelVersionId", "Library"])
 
     libraries = imports.select(pl.col("Library").alias("Id")).unique().sort("Id")
