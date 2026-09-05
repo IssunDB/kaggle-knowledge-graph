@@ -33,6 +33,7 @@ from parse_imports import (
     DEFAULT_STAGE_DIR,
     candidate_paths,
     code_text,
+    expanded_path,
     load_kernel_version_ids,
 )
 
@@ -43,8 +44,8 @@ _PARSER = Parser(Language(tree_sitter_python.language()))
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--code-dir", type=Path, default=DEFAULT_CODE_DIR)
-    parser.add_argument("--stage-dir", type=Path, default=DEFAULT_STAGE_DIR)
+    parser.add_argument("--code-dir", type=expanded_path, default=DEFAULT_CODE_DIR)
+    parser.add_argument("--stage-dir", type=expanded_path, default=DEFAULT_STAGE_DIR)
     return parser.parse_args()
 
 

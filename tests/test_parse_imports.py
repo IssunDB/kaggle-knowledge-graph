@@ -165,3 +165,16 @@ class TestMain:
         assert libraries.schema["Id"] == pl.Utf8
         assert edges.schema["from_kernel_version_id"] == pl.Utf8
         assert edges.schema["to_library_id"] == pl.Utf8
+
+
+class TestEnvPath:
+    def test_expands_tilde_from_environment(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setenv("SOME_DIR", "~/data/code")
+        assert pi.env_path("SOME_DIR", Path("/unused")) == Path.home() / "data" / "code"
+
+    def test_falls_back_to_default_when_unset(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.delenv("SOME_DIR", raising=False)
+        assert pi.env_path("SOME_DIR", Path("~/fallback")) == Path.home() / "fallback"
+
+    def test_expanded_path_type_for_cli_arguments(self) -> None:
+        assert pi.expanded_path("~/x") == Path.home() / "x"

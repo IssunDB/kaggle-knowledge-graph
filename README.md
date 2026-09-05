@@ -37,6 +37,11 @@ Build the Kaggle knowledge graph and launch the CLI or MCP server:
 - `make graph-kernel` builds the kernel-centered knowledge graph from the Meta Kaggle dataset (needs `META_KAGGLE_CODE_DIR` for import and API call parsing).
 - `make kernel-cli` opens the kernel knowledge graph in the IssunDB CLI.
 - `make kernel-mcp` runs the IssunDB MCP server for the kernel knowledge graph.
+
+#### Publish the Graph as a Dataset
+
+- `make hf-package HF_SNAPSHOT=YYYY-MM-DD` packages the staged competition graph as a Hugging Face dataset in `databases/hf-dataset`, with the Parquet files under `data/`, a dataset card, and a manifest of row counts and checksums.
+- `make hf-upload HF_REPO_ID=<user>/<dataset>` uploads that directory to the Hugging Face Hub and tags it with the release version (log in first with `hf auth login`).
 - `make help` shows all available Makefile targets.
 
 #### MCP Server Configuration

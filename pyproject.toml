@@ -5,6 +5,7 @@ description = "The Python environment for the `kaggle-knowledge-graph` project"
 requires-python = ">=3.10,<4.0"
 dependencies = [
     "duckdb>=1.5.4",
+    "huggingface-hub>=1.30.0",
     "kaggle>=1.7.4.5",
     "polars>=1.42.0",
     "python-dotenv>=1.1.0",

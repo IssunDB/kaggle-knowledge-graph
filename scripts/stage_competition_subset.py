@@ -27,8 +27,8 @@ import duckdb
 
 DEFAULT_META_DIR = Path(
     os.environ.get("META_KAGGLE_DIR", str(Path.home() / "downloads" / "KW" / "meta-kaggle"))
-)
-DEFAULT_STAGE_DIR = Path(os.environ.get("STAGE_DIR", "databases/staging_data"))
+).expanduser()
+DEFAULT_STAGE_DIR = Path(os.environ.get("STAGE_DIR", "databases/staging_data")).expanduser()
 
 # Competitions enabled on or after this instant are in scope.
 ENABLED_SINCE = "2020-01-01"
@@ -38,8 +38,10 @@ KERNELS_PER_COMPETITION = 50
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--meta-dir", type=Path, default=DEFAULT_META_DIR)
-    parser.add_argument("--stage-dir", type=Path, default=DEFAULT_STAGE_DIR)
+    parser.add_argument("--meta-dir", type=lambda v: Path(v).expanduser(), default=DEFAULT_META_DIR)
+    parser.add_argument(
+        "--stage-dir", type=lambda v: Path(v).expanduser(), default=DEFAULT_STAGE_DIR
+    )
     parser.add_argument("--kernels-per-competition", type=int, default=KERNELS_PER_COMPETITION)
     parser.add_argument("--include-message-text", action="store_true")
     return parser.parse_args()

@@ -19,6 +19,12 @@ MAP_SIZE_GB ?= 12
 # Kernel knowledge graph build settings
 KERNEL_DB ?= databases/kernel-kg
 
+# Hugging Face dataset release settings
+HF_OUTPUT ?= databases/hf-dataset
+HF_REPO_ID ?= habedi/kaggle-knowledge-graph
+HF_SNAPSHOT ?=
+HF_VERSION ?= $(HF_SNAPSHOT)
+
 # Directories and files to clean
 CACHE_DIRS  = .mypy_cache .pytest_cache .ruff_cache
 COVERAGE    = .coverage htmlcov coverage.xml
@@ -161,6 +167,17 @@ comp-cli: ## Open the Kaggle knowledge graph in the IssunDB CLI
 .PHONY: comp-mcp
 comp-mcp: ## Run the IssunDB MCP server for the Kaggle knowledge graph
 	$(ISSUNDB_MCP) --db-path $(COMP_DB) --map-size-gb $(MAP_SIZE_GB)
+
+.PHONY: hf-package
+hf-package: ## Package the staged competition graph as a Hugging Face dataset (needs HF_SNAPSHOT=YYYY-MM-DD)
+	@test -n "$(HF_SNAPSHOT)" || (echo "set HF_SNAPSHOT to the Meta Kaggle export date, e.g. make hf-package HF_SNAPSHOT=2026-08-01" && exit 1)
+	.venv/bin/python scripts/package_hf_dataset.py --stage-dir "$(COMP_STAGE_DIR)" --output "$(HF_OUTPUT)" --repo-id "$(HF_REPO_ID)" --snapshot "$(HF_SNAPSHOT)" --version "$(HF_VERSION)"
+
+.PHONY: hf-upload
+hf-upload: ## Upload the packaged dataset to the Hugging Face Hub (needs `hf auth login` and HF_VERSION)
+	@test -n "$(HF_VERSION)" || (echo "set HF_VERSION (or HF_SNAPSHOT) to tag the release" && exit 1)
+	hf upload "$(HF_REPO_ID)" "$(HF_OUTPUT)" . --repo-type dataset --commit-message "Release $(HF_VERSION)"
+	hf repo tag create "$(HF_REPO_ID)" "$(HF_VERSION)" --repo-type dataset
 
 .PHONY: neo4j-up
 neo4j-up: ## Start Neo4j with stage/ mounted as /import

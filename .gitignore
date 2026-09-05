@@ -94,3 +94,4 @@ bin/issundb-mcp
 bin/issundb-rest
 bin/issundb-cli
 *.cache
+databases/hf-dataset/

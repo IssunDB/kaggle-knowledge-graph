@@ -50,6 +50,7 @@ construction, reproducible builds, scoped subset testing, and idiomatic Python.
 - `scripts/load_competition_kg.py` loads the Kaggle knowledge graph.
 - `scripts/import_to_issundb.py` loads the kernel graph.
 - `scripts/issundb_load.py` holds the loader logic shared by both load scripts.
+- `scripts/package_hf_dataset.py` packages the staged competition graph as a Hugging Face dataset with a card and manifest.
 - `databases/` includes staged files and graph databases.
 - `bin/issundb-cli` includes the database command line tool binary.
 - `bin/issundb-mcp` includes the MCP server binary.
@@ -65,6 +66,8 @@ construction, reproducible builds, scoped subset testing, and idiomatic Python.
 - `make graph-kernel` builds the kernel knowledge graph end to end.
 - `make kernel-cli` opens the kernel knowledge graph in the IssunDB CLI.
 - `make kernel-mcp` runs the IssunDB MCP server for the kernel knowledge graph.
+- `make hf-package HF_SNAPSHOT=YYYY-MM-DD` packages the staged competition graph Parquet files, a dataset card, and a manifest into `databases/hf-dataset`.
+- `make hf-upload` pushes the packaged dataset to the Hugging Face Hub and tags the release.
 - `make help` lists all targets.
 
 ## Pipeline Constraints
