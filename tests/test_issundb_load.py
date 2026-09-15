@@ -40,7 +40,12 @@ class TestBuildScript:
         assert lines[1] == f":import-edges {(tmp_path / 'edges_a.parquet').resolve()} A A SELF"
         assert "CREATE CONSTRAINT ON (n:A) ASSERT n.Id IS UNIQUE" in lines
         assert "CREATE INDEX FOR (n:A) ON (n.Name)" in lines
-        assert lines[-3:] == ["rebuild-csr", "stats", "quit"]
+        assert lines[-4:] == [
+            "rebuild-csr",
+            "materialize-columns",
+            "stats",
+            "quit",
+        ]
         assert expected_nodes == {"nodes_a.parquet": 2}
 
     def test_missing_node_file_raises_with_hint(self, tmp_path: Path) -> None:

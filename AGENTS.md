@@ -5,14 +5,15 @@ This file provides guidance to coding agents collaborating on this repository.
 ## Mission
 
 This project builds graph databases from the [Meta Kaggle](https://www.kaggle.com/datasets/kaggle/meta-kaggle) dataset and loads them
-into [IssunDB](https://github.com/habedi/issun-db), an embedded graph database.
-The pipeline stages source files with DuckDB, parses code imports with Polars, parses Python API calls with Tree-sitter, and bulk-loads nodes and edges through the IssunDB CLI.
-The project priorities include correct graph construction, reproducible builds, scoped subset testing, and idiomatic Python.
+into [IssunDB](https://github.com/habedi/issun-db), an embedded graph database. The pipeline stages source files with DuckDB, parses code imports with
+Polars, parses Python API calls with Tree-sitter, and bulk-loads nodes and edges through the IssunDB CLI. The project priorities include correct graph
+construction, reproducible builds, scoped subset testing, and idiomatic Python.
 
 ## Core Rules
 
 - Use English for code, comments, documentation, and tests.
-- Stage with DuckDB, parse code imports with Polars, parse Python API calls with Tree-sitter, and load through the IssunDB command line interface. Do not mix these roles.
+- Stage with DuckDB, parse code imports with Polars, parse Python API calls with Tree-sitter, and load through the IssunDB command line interface. Do
+  not mix these roles.
 - Bulk-load nodes and edges with command line tools instead of Cypher queries.
 - Keep the large local source data out of the repository.
 - Ensure staging is deterministic by using a fixed seed rule and fixed source data.
@@ -30,7 +31,7 @@ The project priorities include correct graph construction, reproducible builds, 
 - Avoid em dashes by using semicolons or restructuring sentences.
 - Avoid colorful adjectives and adverbs.
 - Balance the use of noun phrases for checklist items and imperative verbs.
-- Apply title case to headings in Markdown files.
+- Apply the title case to headings in Markdown files.
 - Use correct and complete sentences.
 - Avoid made-up words, abbreviations, and colons in the middle of sentences.
 
@@ -49,6 +50,7 @@ The project priorities include correct graph construction, reproducible builds, 
 - `scripts/load_competition_kg.py` loads the Kaggle knowledge graph.
 - `scripts/import_to_issundb.py` loads the kernel graph.
 - `scripts/issundb_load.py` holds the loader logic shared by both load scripts.
+- `scripts/package_hf_dataset.py` packages the staged competition graph as a Hugging Face dataset with a card and manifest.
 - `databases/` includes staged files and graph databases.
 - `bin/issundb-cli` includes the database command line tool binary.
 - `bin/issundb-mcp` includes the MCP server binary.
@@ -64,19 +66,23 @@ The project priorities include correct graph construction, reproducible builds, 
 - `make graph-kernel` builds the kernel knowledge graph end to end.
 - `make kernel-cli` opens the kernel knowledge graph in the IssunDB CLI.
 - `make kernel-mcp` runs the IssunDB MCP server for the kernel knowledge graph.
+- `make hf-package HF_SNAPSHOT=YYYY-MM-DD` packages the staged competition graph Parquet files, a dataset card, and a manifest into `databases/hf-dataset`.
+- `make hf-upload` pushes the packaged dataset to the Hugging Face Hub and tags the release.
 - `make help` lists all targets.
 
 ## Pipeline Constraints
 
 - Node files are `Id`-first. The `Id` column is auto-indexed. Edge files contain source and destination `Id` keys.
 - Unresolved edge endpoints are dropped. Malformed rows cause errors.
+- Staging only seeds users and organizations that have a row in `Users.csv` or `Organizations.csv`, and it filters every user and organization edge through those seed tables, so no staged edge points to a missing node.
 - Bulk loading must use `:import-edges` instead of Cypher `UNWIND ... CREATE` queries.
 - Node property lookups use auto-indexed full-text indexes. Raw markup language bodies must be searched with `CONTAINS` scans.
 - Cypher query lines take string literals verbatim.
 
 ## Workflow
 
-The workflow includes stage identification before coding, schema checks in `databases/metadata_inventory.md`, scoped pipeline changes with tunable `make`
+The workflow includes stage identification before coding, schema checks in `databases/metadata_inventory.md`, scoped pipeline changes with tunable
+`make`
 variables, dry run staging on subsets, code formatting, and repository documentation updates when behavior changes.
 
 ## Testing Expectations

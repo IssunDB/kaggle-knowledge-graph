@@ -10,13 +10,13 @@ import duckdb
 
 DEFAULT_META_DIR = Path(
     os.environ.get("META_KAGGLE_DIR", str(Path.home() / "downloads" / "KW" / "meta-kaggle"))
-)
+).expanduser()
 DEFAULT_OUTPUT = Path("databases/metadata_inventory.md")
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--meta-dir", type=Path, default=DEFAULT_META_DIR)
+    parser.add_argument("--meta-dir", type=lambda v: Path(v).expanduser(), default=DEFAULT_META_DIR)
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
     return parser.parse_args()
 

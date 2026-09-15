@@ -72,6 +72,7 @@ def build_script(
         lines.append(f"CREATE INDEX FOR (n:{label}) ON (n.{prop})")
 
     lines.append("rebuild-csr")
+    lines.append("materialize-columns")
     lines.append("stats")
     lines.append("quit")
     return "\n".join(lines) + "\n", expected_nodes

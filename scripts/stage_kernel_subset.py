@@ -1,4 +1,4 @@
-"""Stage a kernel-centered Meta Kaggle subset as node and edge CSVs."""
+"""Stage a kernel-centered Meta Kaggle subset as node and edge Parquet files."""
 
 from __future__ import annotations
 
@@ -10,14 +10,16 @@ import duckdb
 
 DEFAULT_META_DIR = Path(
     os.environ.get("META_KAGGLE_DIR", str(Path.home() / "downloads" / "KW" / "meta-kaggle"))
-)
-DEFAULT_STAGE_DIR = Path(os.environ.get("STAGE_DIR", "stage"))
+).expanduser()
+DEFAULT_STAGE_DIR = Path(os.environ.get("STAGE_DIR", "stage")).expanduser()
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--meta-dir", type=Path, default=DEFAULT_META_DIR)
-    parser.add_argument("--stage-dir", type=Path, default=DEFAULT_STAGE_DIR)
+    parser.add_argument("--meta-dir", type=lambda v: Path(v).expanduser(), default=DEFAULT_META_DIR)
+    parser.add_argument(
+        "--stage-dir", type=lambda v: Path(v).expanduser(), default=DEFAULT_STAGE_DIR
+    )
     parser.add_argument("--kernel-limit", type=int, default=10_000)
     parser.add_argument("--include-message-text", action="store_true")
     return parser.parse_args()
@@ -94,7 +96,7 @@ def create_seed_tables(con: duckdb.DuckDBPyConnection, meta_dir: Path, kernel_li
             FROM {csv(meta_dir, "Datasets.csv")} d
             JOIN seed_dataset_ids s ON d.Id = s.Id
         )
-        WHERE OrganizationId IS NOT NULL
+        WHERE OrganizationId IN (SELECT Id FROM {csv(meta_dir, "Organizations.csv")})
         """
     )
     con.execute(
@@ -116,7 +118,7 @@ def create_seed_tables(con: duckdb.DuckDBPyConnection, meta_dir: Path, kernel_li
         """
     )
     con.execute(
-        """
+        f"""
         CREATE OR REPLACE TEMP TABLE seed_user_ids AS
         SELECT DISTINCT UserId AS Id
         FROM (
@@ -128,7 +130,7 @@ def create_seed_tables(con: duckdb.DuckDBPyConnection, meta_dir: Path, kernel_li
             UNION ALL
             SELECT PostUserId AS UserId FROM seed_forum_messages
         )
-        WHERE UserId IS NOT NULL
+        WHERE UserId IN (SELECT Id FROM {csv(meta_dir, "Users.csv")})
         """
     )
 
@@ -140,7 +142,8 @@ def stage_nodes(
         con,
         """
         SELECT Id, AuthorUserId, CurrentKernelVersionId, FirstKernelVersionId, ForumTopicId,
-               CreationDate, EvaluationDate, MadePublicDate, Medal, TotalViews, TotalComments, TotalVotes, CurrentUrlSlug
+               CreationDate, EvaluationDate, MadePublicDate, Medal, TotalViews, TotalComments,
+               TotalVotes, CurrentUrlSlug
         FROM seed_kernels
         """,
         stage_dir / "nodes_kernel.parquet",
@@ -170,7 +173,8 @@ def stage_nodes(
         con,
         f"""
         SELECT d.Id AS Id, CreatorUserId, OwnerUserId, OwnerOrganizationId, CurrentDatasetVersionId,
-               ForumId, Type, CreationDate, LastActivityDate, TotalViews, TotalDownloads, TotalVotes, TotalKernels, Medal
+               ForumId, Type, CreationDate, LastActivityDate, TotalViews, TotalDownloads,
+               TotalVotes, TotalKernels, Medal
         FROM {csv(meta_dir, "Datasets.csv")} d
         JOIN seed_dataset_ids s ON d.Id = s.Id
         """,
@@ -259,7 +263,7 @@ def stage_edges(con: duckdb.DuckDBPyConnection, meta_dir: Path, stage_dir: Path)
         """
         SELECT AuthorUserId AS from_user_id, Id AS to_kernel_id
         FROM seed_kernels
-        WHERE AuthorUserId IS NOT NULL
+        WHERE AuthorUserId IN (SELECT Id FROM seed_user_ids)
         """,
         stage_dir / "edges_user_authored_kernel.parquet",
     )
@@ -295,7 +299,7 @@ def stage_edges(con: duckdb.DuckDBPyConnection, meta_dir: Path, stage_dir: Path)
         """
         SELECT Id AS from_kernel_version_id, AuthorUserId AS to_user_id
         FROM seed_kernel_versions
-        WHERE AuthorUserId IS NOT NULL
+        WHERE AuthorUserId IN (SELECT Id FROM seed_user_ids)
         """,
         stage_dir / "edges_kernel_version_authored_by_user.parquet",
     )
@@ -356,7 +360,7 @@ def stage_edges(con: duckdb.DuckDBPyConnection, meta_dir: Path, stage_dir: Path)
         """
         SELECT Id AS from_competition_id, OrganizationId AS to_organization_id
         FROM seed_competitions
-        WHERE OrganizationId IS NOT NULL
+        WHERE OrganizationId IN (SELECT Id FROM seed_organization_ids)
         """,
         stage_dir / "edges_competition_has_organization.parquet",
     )
@@ -366,7 +370,7 @@ def stage_edges(con: duckdb.DuckDBPyConnection, meta_dir: Path, stage_dir: Path)
         SELECT d.Id AS from_dataset_id, d.OwnerOrganizationId AS to_organization_id
         FROM {csv(meta_dir, "Datasets.csv")} d
         JOIN seed_dataset_ids s ON d.Id = s.Id
-        WHERE d.OwnerOrganizationId IS NOT NULL
+        WHERE d.OwnerOrganizationId IN (SELECT Id FROM seed_organization_ids)
         """,
         stage_dir / "edges_dataset_owned_by_organization.parquet",
     )
@@ -448,7 +452,7 @@ def stage_edges(con: duckdb.DuckDBPyConnection, meta_dir: Path, stage_dir: Path)
         """
         SELECT PostUserId AS from_user_id, Id AS to_forum_message_id
         FROM seed_forum_messages
-        WHERE PostUserId IS NOT NULL
+        WHERE PostUserId IN (SELECT Id FROM seed_user_ids)
         """,
         stage_dir / "edges_user_posted_message.parquet",
     )

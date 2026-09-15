@@ -93,3 +93,5 @@ databases/metadata_inventory.md
 bin/issundb-mcp
 bin/issundb-rest
 bin/issundb-cli
+*.cache
+databases/hf-dataset/

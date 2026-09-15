@@ -13,7 +13,7 @@ from pathlib import Path
 import duckdb
 import polars as pl
 import pytest
-from csv_fixtures import write_csv
+from csv_fixtures import append_csv_row, write_csv
 
 import stage_kernel_subset as sks
 
@@ -678,3 +678,102 @@ class TestLongFormText:
         row = versions.filter(pl.col("Id") == 501)
         assert row["Description"][0] == 'Homes with "great" views.\nSee the notebook.'
         assert row["VersionNotes"][0] == "Initial release"
+
+
+class TestDanglingEndpoints:
+    """Every staged edge must resolve to a staged node, even when the source
+    CSVs reference a user or organization that has no row of its own."""
+
+    def test_user_edges_skip_users_missing_from_users_csv(
+        self, meta_dir: Path, tmp_path: Path
+    ) -> None:
+        append_csv_row(
+            meta_dir,
+            "ForumMessages.csv",
+            {
+                "Id": 3999,
+                "ForumTopicId": 2001,
+                "PostUserId": 555,
+                "PostDate": "2021-03-01",
+                "ReplyToForumMessageId": "",
+                "Message": "ghost",
+                "RawMarkdown": "ghost",
+                "Medal": "",
+                "MedalAwardDate": "",
+            },
+        )
+        stage_dir = tmp_path / "stage"
+        _run_pipeline(meta_dir, stage_dir)
+        users = set(pl.read_parquet(stage_dir / "nodes_user.parquet")["Id"])
+        assert 555 not in users
+        for name in (
+            "edges_user_authored_kernel.parquet",
+            "edges_user_posted_message.parquet",
+            "edges_user_member_of_organization.parquet",
+        ):
+            edges = pl.read_parquet(stage_dir / name)
+            assert set(edges["from_user_id"]).issubset(users), name
+        authored_by = pl.read_parquet(stage_dir / "edges_kernel_version_authored_by_user.parquet")
+        assert set(authored_by["to_user_id"]).issubset(users)
+        messages = pl.read_parquet(stage_dir / "nodes_forum_message.parquet")
+        assert 3999 in set(messages["Id"])
+
+    def test_organization_edges_skip_organizations_missing_from_csv(
+        self, meta_dir: Path, tmp_path: Path
+    ) -> None:
+        append_csv_row(
+            meta_dir,
+            "Datasets.csv",
+            {
+                "Id": 52,
+                "CreatorUserId": 100,
+                "OwnerUserId": 100,
+                "OwnerOrganizationId": 777,
+                "CurrentDatasetVersionId": 503,
+                "ForumId": "",
+                "Type": 2,
+                "CreationDate": "2021-01-10",
+                "LastActivityDate": "2021-01-11",
+                "TotalViews": 0,
+                "TotalDownloads": 0,
+                "TotalVotes": 0,
+                "TotalKernels": 0,
+                "Medal": "",
+            },
+        )
+        append_csv_row(
+            meta_dir,
+            "DatasetVersions.csv",
+            {
+                "Id": 503,
+                "DatasetId": 52,
+                "CreatorUserId": 100,
+                "LicenseName": "CC0",
+                "CreationDate": "2021-01-10",
+                "VersionNumber": 1,
+                "Title": "Ghost Org Dataset",
+                "Slug": "ghost-org",
+                "Subtitle": "",
+                "Description": "",
+                "VersionNotes": "",
+                "TotalCompressedBytes": 1,
+                "TotalUncompressedBytes": 1,
+            },
+        )
+        append_csv_row(
+            meta_dir,
+            "KernelVersionDatasetSources.csv",
+            {"KernelVersionId": 11, "SourceDatasetVersionId": 503},
+        )
+        stage_dir = tmp_path / "stage"
+        _run_pipeline(meta_dir, stage_dir)
+        organizations = set(pl.read_parquet(stage_dir / "nodes_organization.parquet")["Id"])
+        assert 777 not in organizations
+        assert 52 in set(pl.read_parquet(stage_dir / "nodes_dataset.parquet")["Id"])
+        for name in (
+            "edges_dataset_owned_by_organization.parquet",
+            "edges_competition_has_organization.parquet",
+            "edges_user_member_of_organization.parquet",
+        ):
+            edges = pl.read_parquet(stage_dir / name)
+            assert set(edges["to_organization_id"]).issubset(organizations), name

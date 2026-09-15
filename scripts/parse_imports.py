@@ -11,12 +11,22 @@ from typing import Any
 
 import polars as pl
 
-DEFAULT_CODE_DIR = Path(
-    os.environ.get(
-        "META_KAGGLE_CODE_DIR", str(Path.home() / "Downloads" / "KW" / "meta-kaggle-code")
-    )
+
+def expanded_path(value: str) -> Path:
+    """Turn a command line or environment path into a `Path` with `~` expanded."""
+    return Path(value).expanduser()
+
+
+def env_path(name: str, default: Path) -> Path:
+    """Read a directory from the environment, expanding `~`, or fall back to `default`."""
+    value = os.environ.get(name)
+    return expanded_path(value) if value else default.expanduser()
+
+
+DEFAULT_CODE_DIR = env_path(
+    "META_KAGGLE_CODE_DIR", Path.home() / "Downloads" / "KW" / "meta-kaggle-code"
 )
-DEFAULT_STAGE_DIR = Path(os.environ.get("STAGE_DIR", "stage"))
+DEFAULT_STAGE_DIR = env_path("STAGE_DIR", Path("stage"))
 
 PY_IMPORT_RE = re.compile(r"^\s*import\s+(.+)$", re.MULTILINE)
 PY_FROM_RE = re.compile(r"^\s*from\s+([A-Za-z_][\w.]*)\s+import\s+", re.MULTILINE)
@@ -26,8 +36,8 @@ PY_IMPORT_NAME_RE = re.compile(r"^([A-Za-z_][\w.]*)")
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--code-dir", type=Path, default=DEFAULT_CODE_DIR)
-    parser.add_argument("--stage-dir", type=Path, default=DEFAULT_STAGE_DIR)
+    parser.add_argument("--code-dir", type=expanded_path, default=DEFAULT_CODE_DIR)
+    parser.add_argument("--stage-dir", type=expanded_path, default=DEFAULT_STAGE_DIR)
     return parser.parse_args()
 
 
@@ -116,7 +126,9 @@ def main() -> None:
             for library in imported_libraries(text):
                 rows.append((kernel_version_id, library))
 
-    imports = pl.DataFrame(rows, schema=["KernelVersionId", "Library"], orient="row")
+    imports = pl.DataFrame(
+        rows, schema={"KernelVersionId": pl.Utf8, "Library": pl.Utf8}, orient="row"
+    )
     imports = imports.unique().sort(["KernelVersionId", "Library"])
 
     libraries = imports.select(pl.col("Library").alias("Id")).unique().sort("Id")
