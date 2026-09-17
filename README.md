@@ -38,20 +38,18 @@ export META_KAGGLE_CODE_DIR="/path/to/meta-kaggle-code"
 
 Build the Kaggle knowledge graph and launch the CLI or MCP server:
 
-- `make graph-kc` builds the competition-centered knowledge graph from the Meta Kaggle dataset (needs `META_KAGGLE_CODE_DIR` for import and API call
-  parsing).
+- `make graph-kc` builds the knowledge graph from the Meta Kaggle dataset (needs `META_KAGGLE_CODE_DIR` for import and API call parsing).
 - `make comp-cli` opens the competition knowledge graph in the IssunDB CLI.
 - `make comp-mcp` runs the IssunDB MCP server for the competition knowledge graph.
-- `make graph-kernel` builds the kernel-centered knowledge graph from the Meta Kaggle dataset (needs `META_KAGGLE_CODE_DIR` for import and API call
-  parsing).
+- `make graph-kernel` builds the knowledge graph from the Meta Kaggle dataset (needs `META_KAGGLE_CODE_DIR` for import and API call parsing).
 - `make kernel-cli` opens the kernel knowledge graph in the IssunDB CLI.
 - `make kernel-mcp` runs the IssunDB MCP server for the kernel knowledge graph.
 - `make help` shows all available Makefile targets.
 
 ### Publish the Graph as a Dataset
 
-- `make hf-package HF_SNAPSHOT=YYYY-MM-DD` packages the staged competition graph as a Hugging Face dataset in `databases/hf-dataset`, with the Parquet
-  files under `data/`, a dataset card, and a manifest of row counts and checksums.
+- `make hf-package HF_SNAPSHOT=YYYY-MM-DD` packages the competition graph as a Hugging Face dataset in `databases/hf-dataset`, with the Parquet
+  files under `data/`, a dataset card, and other metadata.
 - `make hf-upload HF_REPO_ID=<user>/<dataset> HF_VERSION=<version>` uploads that directory to the Hugging Face Hub and tags it with the release
   version (log in first with `hf auth login`).
 
