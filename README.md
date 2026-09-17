@@ -14,23 +14,39 @@ and loading it into [IssunDB](https://github.com/IssunDB/issun-db/releases), whi
 
 ### Data
 
-#### 1. Download Dataset
+The pipeline needs the Meta Kaggle tabular dataset, and it can (optionally) include the Meta Kaggle Code dataset.
+
+#### 1. Download Meta Kaggle Dataset
 
 ```bash
 curl -L -o /path/to/meta-kaggle.zip \
   https://www.kaggle.com/api/v1/datasets/download/kaggle/meta-kaggle
 ```
 
-#### 2. Extract Dataset
+#### 2. Extract Meta Kaggle Dataset
 
 ```bash
 unzip /path/to/meta-kaggle.zip -d /path/to/meta-kaggle
 ```
 
-#### 3. Configure Environment Variables
+#### 3. Download and Extract Meta Kaggle Code (Optional)
+
+The [Meta Kaggle Code](https://www.kaggle.com/datasets/kaggle/meta-kaggle-code) dataset contains the source code files for Kaggle notebooks.
+This dataset is optional; it is only needed if you want the knowledge graph to include imported packages (`Library` nodes) and Python API invocations (`ApiCall` nodes).
+If omitted, the build pipeline continues successfully and constructs the graph without code-level nodes and relationships.
+
+```bash
+curl -L -o /path/to/meta-kaggle-code.zip \
+  https://www.kaggle.com/api/v1/datasets/download/kaggle/meta-kaggle-code
+unzip /path/to/meta-kaggle-code.zip -d /path/to/meta-kaggle-code
+```
+
+#### 4. Configure Environment Variables
 
 ```bash
 export META_KAGGLE_DIR="/path/to/meta-kaggle"
+
+# This is pptional. Set only if Meta Kaggle Code was downloaded
 export META_KAGGLE_CODE_DIR="/path/to/meta-kaggle-code"
 ```
 
@@ -38,10 +54,10 @@ export META_KAGGLE_CODE_DIR="/path/to/meta-kaggle-code"
 
 Build the Kaggle knowledge graph and launch the CLI or MCP server:
 
-- `make graph-kc` builds the knowledge graph from the Meta Kaggle dataset (needs `META_KAGGLE_CODE_DIR` for import and API call parsing).
+- `make graph-kc` builds the knowledge graph from the Meta Kaggle dataset (parses imports and API calls if `META_KAGGLE_CODE_DIR` is set).
 - `make comp-cli` opens the competition knowledge graph in the IssunDB CLI.
 - `make comp-mcp` runs the IssunDB MCP server for the competition knowledge graph.
-- `make graph-kernel` builds the knowledge graph from the Meta Kaggle dataset (needs `META_KAGGLE_CODE_DIR` for import and API call parsing).
+- `make graph-kernel` builds the knowledge graph from the Meta Kaggle dataset (parses imports and API calls if `META_KAGGLE_CODE_DIR` is set).
 - `make kernel-cli` opens the kernel knowledge graph in the IssunDB CLI.
 - `make kernel-mcp` runs the IssunDB MCP server for the kernel knowledge graph.
 - `make help` shows all available Makefile targets.
