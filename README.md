@@ -8,7 +8,7 @@
 ---
 
 This repository contains code for building a knowledge graph from the [Meta Kaggle](https://www.kaggle.com/datasets/kaggle/meta-kaggle) dataset
-and loading it into [IssunDB](https://github.com/IssunDB/issun-db), which provides CLI and MCP interfaces for querying the data.
+and loading it into [IssunDB](https://github.com/IssunDB/issun-db/releases), which provides CLI and MCP interfaces for querying the data.
 
 ## Quickstart
 
