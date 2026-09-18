@@ -171,8 +171,6 @@ def _front_matter(tables: list[TableInfo]) -> str:
         "- knowledge-graph",
         "- graph",
         "- competitions",
-        "- notebooks",
-        "- code-analysis",
         "size_categories:",
         f"- {_size_category(total_rows)}",
         "configs:",
@@ -203,17 +201,13 @@ def render_card(tables: list[TableInfo], meta: ReleaseMeta) -> str:
     body = f"""
 # Kaggle Knowledge Graph
 
-A competition-centered knowledge graph built from Kaggle's public
-[Meta Kaggle]({META_KAGGLE_URL}) and [Meta Kaggle Code]({META_KAGGLE_CODE_URL})
-datasets. It links competitions, teams, submissions, users, notebooks, notebook
-versions, datasets, discussion forums, tags, organizations, and the libraries
-and API calls used in notebook code.
+A knowledge graph built from Kaggle's public
+[Meta Kaggle]({META_KAGGLE_URL}) (and [Meta Kaggle Code]({META_KAGGLE_CODE_URL})
+datasets). It links competitions, teams, submissions, users, notebooks,
+datasets, discussion forums, tags, organizations, and notebook code invocations.
 
-The graph is shipped as plain Parquet files, one per node label and one per
-relationship type, so it can be loaded with DuckDB, Polars, pandas, Spark, or
-any graph database that bulk-imports tabular data. Every node file has an `Id`
-column, and every edge file has two columns holding the source and destination
-`Id` values.
+**See the [project repository]({SOURCE_REPO_URL}) for build scripts and
+documentation on the graph schema, data model, and usage examples.**
 
 ## Release
 
@@ -221,35 +215,24 @@ column, and every edge file has two columns holding the source and destination
 | --- | --- |
 | Version | `{meta.version}` |
 | Meta Kaggle snapshot | {meta.snapshot} |
-| Packaged on | {meta.packaged_on} |
 | Build code | [{SOURCE_REPO_URL}]({SOURCE_REPO_URL}) at commit `{meta.source_commit}` |
 | Nodes | {total_nodes:,} |
 | Edges | {total_edges:,} |
 | Size | {total_bytes / (1 << 20):,.0f} MiB |
 
-The `manifest.json` file beside this card lists the row count, byte size, and
-SHA-256 digest of every file in this release.
+File counts, byte sizes, and SHA-256 digests are recorded in `manifest.json`.
 
 ## Scope
 
-The graph covers competitions enabled on or after 2020-01-01, excluding
-Community (in-class) events, and everything the build could attach to them:
+The graph covers competitions enabled on or after 2020-01-01 (excluding Community events) and their
+ associated entities:
 
-- Ranked or medal-winning teams, their members, and their leaders.
-- Each team's selected submissions and its public and private leaderboard
-  submissions.
-- The 50 most voted notebooks per competition, with the notebook versions that
-  were sourced from that competition, their authors, and their fork lineage.
-- Datasets and dataset versions used by those notebook versions.
-- The competition discussion forums with every topic and message, including
-  team write-up topics. Forum message text is included as the original HTML in
-  `Message` and as Markdown in `RawMarkdown`.
-- The tag taxonomy plus the host and dataset-owner organizations.
-- Library imports parsed from the notebook source, and Python API calls parsed
-  with Tree-sitter and resolved to the imported module (for example
-  `numpy.mean`).
+- Ranked and medal-winning teams, their members, leaders, and leaderboard submissions.
+- The 50 most-voted notebooks per competition, notebook version lineage, and referenced datasets.
+- Competition discussion forums with topics, team write-ups, and messages (in raw HTML and Markdown).
+- Tag taxonomy, host and owner organizations, imported libraries, and parsed Python API calls.
 
-Every edge file references only nodes that are present in this release.
+All edge endpoints resolve to nodes present in this release.
 
 ## Tables
 
@@ -260,7 +243,7 @@ Every edge file references only nodes that are present in this release.
 """
     for table in nodes:
         body += (
-            f"| `{table.label}` | `{table.filename}` | {table.rows} | {_columns_cell(table)} |\n"
+            f"| `{table.label}` | `{table.filename}` | {table.rows:,} | {_columns_cell(table)} |\n"
         )
 
     body += """
@@ -272,29 +255,28 @@ Every edge file references only nodes that are present in this release.
     for table in edges:
         body += (
             f"| `{table.etype}` | `{table.src}` | `{table.dst}` | `{table.filename}` "
-            f"| {table.rows} |\n"
+            f"| {table.rows:,} |\n"
         )
 
     body += f"""
 ## Usage
 
-Query the files directly with DuckDB:
+Query directly with DuckDB:
 
 ```python
 import duckdb
 
-con = duckdb.connect()
-con.execute(\"\"\"
-    SELECT c.Title, count(*) AS teams
+duckdb.sql(\"\"\"
+    SELECT c.Title, COUNT(*) AS teams
     FROM 'data/edges_team_competed_in_competition.parquet' e
     JOIN 'data/nodes_competition.parquet' c ON c.Id = e.to_competition_id
     GROUP BY c.Title
     ORDER BY teams DESC
     LIMIT 10
-\"\"\").fetchall()
+\"\"\").show()
 ```
 
-Or with the `datasets` library, one configuration per table:
+Load with Hugging Face `datasets`:
 
 ```python
 from datasets import load_dataset
@@ -302,45 +284,23 @@ from datasets import load_dataset
 competitions = load_dataset("{meta.repo_id}", "nodes_competition", split="train")
 ```
 
-To query the graph with Cypher, load the files into
-[IssunDB](https://github.com/habedi/issun-db) using the build repository's
-`make comp-load` target, which also starts an MCP server for AI assistants.
-
-## Building It Yourself
-
-The build code lives at [{SOURCE_REPO_URL}]({SOURCE_REPO_URL}). It stages the
-Meta Kaggle CSVs with DuckDB, parses imports with Polars, parses Python API
-calls with Tree-sitter, and validates that no staged edge points to a missing
-node. The seed rules are fixed, so the same Meta Kaggle export reproduces the
-same graph.
+To query with Cypher, load the files into [IssunDB](https://github.com/IssunDB/issun-db) or
+any other graph database of your choice.
 
 ## Limitations
 
-- Only competitions enabled since 2020 are included, and only the 50 most voted
-  notebooks per competition.
-- The graph is a snapshot of the Meta Kaggle export dated {meta.snapshot}.
-  Later activity on Kaggle is absent.
-- Library and API call tables cover only notebook versions whose source is
-  present in the Meta Kaggle Code export.
-- Forum messages are stored as Kaggle's raw HTML and Markdown and are not
-  cleaned.
+- Snapshot from {meta.snapshot}; later Kaggle activity is not included.
+- Covers competitions enabled on or after 2020-01-01 and at most 50 most-voted notebooks per competition.
+- Library and API call tables cover only notebook versions available in Meta Kaggle Code.
+- Forum messages are stored as raw Kaggle HTML and Markdown.
 
-## Licensing and Attribution
+## Licensing and Privacy
 
-Meta Kaggle and Meta Kaggle Code are published by Kaggle under the
-[CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/) license,
-and this derived dataset carries the same license. Use is limited to
-non-commercial purposes, and derivatives must be shared under the same terms.
-Please credit Kaggle as the source of the underlying data.
-
-The build code is separately licensed under the MIT License.
-
-## Personal Data
-
-The graph contains public Kaggle profile fields (user names, display names,
-countries, and performance tiers) and public forum posts, exactly as published
-in Meta Kaggle. Nothing is added beyond what Kaggle already publishes. If you
-find content that should not be here, open an issue on the build repository.
+Meta Kaggle data is licensed under
+[CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/) for
+non-commercial use with attribution.
+Build scripts at [{SOURCE_REPO_URL}]({SOURCE_REPO_URL}) are licensed under the MIT License.
+The dataset includes only public profile attributes and forum posts published by Kaggle.
 """
     return _front_matter(tables) + "\n" + body
 

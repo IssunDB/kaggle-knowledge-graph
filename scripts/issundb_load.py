@@ -84,7 +84,9 @@ def validate(log_text: str, expected_nodes: dict[str, int]) -> list[str]:
 
     # Any command-level error fails the load (including a rejected constraint).
     for line in log_text.splitlines():
-        low = line.lower()
+        low = line.lower().strip()
+        if low.startswith("issundb>"):
+            low = low[len("issundb>") :].strip()
         if low.startswith("error") or "mdb_" in low or "storage dependency error" in low:
             failures.append(f"command error: {line.strip()}")
 
