@@ -2,7 +2,7 @@
 
 [![Tests](https://img.shields.io/github/actions/workflow/status/IssunDB/kaggle-knowledge-graph/tests.yml?label=tests&style=flat&labelColor=333333&logo=github&logoColor=white)](https://github.com/IssunDB/kaggle-knowledge-graph/actions/workflows/tests.yml)
 [![Code Coverage](https://img.shields.io/codecov/c/github/IssunDB/kaggle-knowledge-graph?style=flat&label=coverage&labelColor=333333&logo=codecov&logoColor=white)](https://codecov.io/gh/IssunDB/kaggle-knowledge-graph)
-[![Hugging Face](https://img.shields.io/badge/Hugging%20Face-Dataset-ffd21e?style=flat&labelColor=333333&logo=huggingface&logoColor=white)](https://huggingface.co/datasets/habedi/kaggle-knowledge-graph)
+[![Hugging Face](https://img.shields.io/badge/HF%20Dataset-view-ffd21e?style=flat&labelColor=333333&logo=huggingface&logoColor=white)](https://huggingface.co/datasets/habedi/kaggle-knowledge-graph)
 [![Examples](https://img.shields.io/badge/examples-view-green?style=flat&labelColor=282c34&logo=neo4j)](https://github.com/IssunDB/kaggle-knowledge-graph/tree/main/examples)
 [![License](https://img.shields.io/badge/license-MIT-007ec6?style=flat&labelColor=333333&logo=open-source-initiative&logoColor=white)](https://github.com/IssunDB/kaggle-knowledge-graph/blob/main/LICENSE)
 
