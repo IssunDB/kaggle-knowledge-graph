@@ -206,7 +206,7 @@ A knowledge graph built from Kaggle's public
 datasets). It links competitions, teams, submissions, users, notebooks,
 datasets, discussion forums, tags, organizations, and notebook code invocations.
 
-**See the [source repository]({SOURCE_REPO_URL}) for build scripts and
+**See the [project repository]({SOURCE_REPO_URL}) for build scripts and
 documentation on the graph schema, data model, and usage examples.**
 
 ## Release
@@ -284,8 +284,8 @@ from datasets import load_dataset
 competitions = load_dataset("{meta.repo_id}", "nodes_competition", split="train")
 ```
 
-To query with Cypher, load the files into
-[IssunDB](https://github.com/IssunDB/issun-db) using `make comp-load`.
+To query with Cypher, load the files into [IssunDB](https://github.com/IssunDB/issun-db) or
+any other graph database of your choice.
 
 ## Limitations
 
