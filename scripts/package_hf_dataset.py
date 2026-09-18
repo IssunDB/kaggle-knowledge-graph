@@ -206,9 +206,8 @@ A knowledge graph built from Kaggle's public
 datasets). It links competitions, teams, submissions, users, notebooks,
 datasets, discussion forums, tags, organizations, and notebook code invocations.
 
-See the [source repository]({SOURCE_REPO_URL}) for build scripts and
-[documentation](https://issundb.github.io/kaggle-knowledge-graph/) on
-the graph schema, data model, and usage examples.
+**See the [source repository]({SOURCE_REPO_URL}) for build scripts and
+documentation on the graph schema, data model, and usage examples.**
 
 ## Release
 
