@@ -31,10 +31,6 @@ unzip /path/to/meta-kaggle.zip -d /path/to/meta-kaggle
 
 #### 3. Download and Extract Meta Kaggle Code (Optional)
 
-The [Meta Kaggle Code](https://www.kaggle.com/datasets/kaggle/meta-kaggle-code) dataset contains the source code files for Kaggle notebooks.
-This dataset is optional; it is only needed if you want the knowledge graph to include imported packages (`Library` nodes) and Python API invocations (`ApiCall` nodes).
-If omitted, the build pipeline continues successfully and constructs the graph without code-level nodes and relationships.
-
 ```bash
 curl -L -o /path/to/meta-kaggle-code.zip \
   https://www.kaggle.com/api/v1/datasets/download/kaggle/meta-kaggle-code
