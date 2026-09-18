@@ -34,6 +34,7 @@ unzip /path/to/meta-kaggle.zip -d /path/to/meta-kaggle
 ```bash
 curl -L -o /path/to/meta-kaggle-code.zip \
   https://www.kaggle.com/api/v1/datasets/download/kaggle/meta-kaggle-code
+  
 unzip /path/to/meta-kaggle-code.zip -d /path/to/meta-kaggle-code
 ```
 
@@ -42,9 +43,12 @@ unzip /path/to/meta-kaggle-code.zip -d /path/to/meta-kaggle-code
 ```bash
 export META_KAGGLE_DIR="/path/to/meta-kaggle"
 
-# This is pptional. Set only if Meta Kaggle Code was downloaded
+# This is optional. Set only if Meta Kaggle Code was downloaded
 export META_KAGGLE_CODE_DIR="/path/to/meta-kaggle-code"
 ```
+
+> [!NOTE]
+> Remember to replace the correct paths in the commands above.
 
 ### Build and Launch
 
@@ -58,7 +62,7 @@ Build the Kaggle knowledge graph and launch the CLI or MCP server:
 - `make kernel-mcp` runs the IssunDB MCP server for the kernel knowledge graph.
 - `make help` shows all available Makefile targets.
 
-### Publish the Graph as a Dataset
+### Publish the Graph as a Hugging Face Dataset
 
 - `make hf-package HF_SNAPSHOT=YYYY-MM-DD` packages the competition graph as a Hugging Face dataset in `databases/hf-dataset`, with the Parquet
   files under `data/`, a dataset card, and other metadata.
@@ -84,8 +88,6 @@ To connect AI agents to the IssunDB MCP server, use the configuration template a
     }
 }
 ```
-
-Replace `/path/to/kaggle-knowledge-graph` with the absolute path to your repository root directory.
 
 ### Knowledge Graph Schema
 
