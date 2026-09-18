@@ -171,8 +171,6 @@ def _front_matter(tables: list[TableInfo]) -> str:
         "- knowledge-graph",
         "- graph",
         "- competitions",
-        "- notebooks",
-        "- code-analysis",
         "size_categories:",
         f"- {_size_category(total_rows)}",
         "configs:",
@@ -203,13 +201,14 @@ def render_card(tables: list[TableInfo], meta: ReleaseMeta) -> str:
     body = f"""
 # Kaggle Knowledge Graph
 
-A competition-centered knowledge graph built from Kaggle's public
-[Meta Kaggle]({META_KAGGLE_URL}) and [Meta Kaggle Code]({META_KAGGLE_CODE_URL})
-datasets. It links competitions, teams, submissions, users, notebooks,
+A knowledge graph built from Kaggle's public
+[Meta Kaggle]({META_KAGGLE_URL}) (and [Meta Kaggle Code]({META_KAGGLE_CODE_URL})
+datasets). It links competitions, teams, submissions, users, notebooks,
 datasets, discussion forums, tags, organizations, and notebook code invocations.
 
-Shipped as Parquet tables (one per label and relationship type) with auto-indexed
-`Id` keys for loading into DuckDB, Polars, pandas, or graph databases.
+See the [source repository]({SOURCE_REPO_URL}) for build scripts and
+[documentation](https://issundb.github.io/kaggle-knowledge-graph/) on
+the graph schema, data model, and usage examples.
 
 ## Release
 
@@ -217,7 +216,6 @@ Shipped as Parquet tables (one per label and relationship type) with auto-indexe
 | --- | --- |
 | Version | `{meta.version}` |
 | Meta Kaggle snapshot | {meta.snapshot} |
-| Packaged on | {meta.packaged_on} |
 | Build code | [{SOURCE_REPO_URL}]({SOURCE_REPO_URL}) at commit `{meta.source_commit}` |
 | Nodes | {total_nodes:,} |
 | Edges | {total_edges:,} |
@@ -227,15 +225,13 @@ File counts, byte sizes, and SHA-256 digests are recorded in `manifest.json`.
 
 ## Scope
 
-The graph covers competitions enabled on or after 2020-01-01 (excluding
-Community events) and their associated entities:
+The graph covers competitions enabled on or after 2020-01-01 (excluding Community events) and their
+ associated entities:
 
 - Ranked and medal-winning teams, their members, leaders, and leaderboard submissions.
 - The 50 most-voted notebooks per competition, notebook version lineage, and referenced datasets.
-- Competition discussion forums with topics, team write-ups, and messages (in
-  raw HTML and Markdown).
-- Tag taxonomy, host and owner organizations, imported libraries, and
-  Tree-sitter-parsed Python API calls.
+- Competition discussion forums with topics, team write-ups, and messages (in raw HTML and Markdown).
+- Tag taxonomy, host and owner organizations, imported libraries, and parsed Python API calls.
 
 All edge endpoints resolve to nodes present in this release.
 
@@ -295,8 +291,7 @@ To query with Cypher, load the files into
 ## Limitations
 
 - Snapshot from {meta.snapshot}; later Kaggle activity is not included.
-- Covers competitions enabled on or after 2020-01-01 and at most 50 most-voted
-  notebooks per competition.
+- Covers competitions enabled on or after 2020-01-01 and at most 50 most-voted notebooks per competition.
 - Library and API call tables cover only notebook versions available in Meta Kaggle Code.
 - Forum messages are stored as raw Kaggle HTML and Markdown.
 
@@ -304,8 +299,8 @@ To query with Cypher, load the files into
 
 Meta Kaggle data is licensed under
 [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/) for
-non-commercial use with attribution. Build scripts at
-[{SOURCE_REPO_URL}]({SOURCE_REPO_URL}) are licensed under the MIT License.
+non-commercial use with attribution.
+Build scripts at [{SOURCE_REPO_URL}]({SOURCE_REPO_URL}) are licensed under the MIT License.
 The dataset includes only public profile attributes and forum posts published by Kaggle.
 """
     return _front_matter(tables) + "\n" + body
