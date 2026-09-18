@@ -2,6 +2,7 @@
 
 [![Tests](https://img.shields.io/github/actions/workflow/status/IssunDB/kaggle-knowledge-graph/tests.yml?label=tests&style=flat&labelColor=333333&logo=github&logoColor=white)](https://github.com/IssunDB/kaggle-knowledge-graph/actions/workflows/tests.yml)
 [![Code Coverage](https://img.shields.io/codecov/c/github/IssunDB/kaggle-knowledge-graph?style=flat&label=coverage&labelColor=333333&logo=codecov&logoColor=white)](https://codecov.io/gh/IssunDB/kaggle-knowledge-graph)
+[![Hugging Face](https://img.shields.io/badge/Hugging%20Face-Dataset-ffd21e?style=flat&labelColor=333333&logo=huggingface&logoColor=white)](https://huggingface.co/datasets/habedi/kaggle-knowledge-graph)
 [![Examples](https://img.shields.io/badge/examples-view-green?style=flat&labelColor=282c34&logo=neo4j)](https://github.com/IssunDB/kaggle-knowledge-graph/tree/main/examples)
 [![License](https://img.shields.io/badge/license-MIT-007ec6?style=flat&labelColor=333333&logo=open-source-initiative&logoColor=white)](https://github.com/IssunDB/kaggle-knowledge-graph/blob/main/LICENSE)
 
@@ -63,6 +64,8 @@ Build the Kaggle knowledge graph and launch the CLI or MCP server:
 - `make help` shows all available Makefile targets.
 
 ### Publish the Graph as a Hugging Face Dataset
+
+The published dataset is available on Hugging Face at [habedi/kaggle-knowledge-graph](https://huggingface.co/datasets/habedi/kaggle-knowledge-graph).
 
 - `make hf-package HF_SNAPSHOT=YYYY-MM-DD` packages the competition graph as a Hugging Face dataset in `databases/hf-dataset`, with the Parquet
   files under `data/`, a dataset card, and other metadata.
