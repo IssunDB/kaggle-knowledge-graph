@@ -24,6 +24,7 @@ HF_OUTPUT ?= databases/hf-dataset
 HF_REPO_ID ?= habedi/kaggle-knowledge-graph
 HF_SNAPSHOT ?=
 HF_VERSION ?= $(HF_SNAPSHOT)
+HF ?= .venv/bin/hf
 
 # Directories and files to clean
 CACHE_DIRS  = .mypy_cache .pytest_cache .ruff_cache
@@ -176,8 +177,8 @@ hf-package: ## Package the staged competition graph as a Hugging Face dataset (n
 .PHONY: hf-upload
 hf-upload: ## Upload the packaged dataset to the Hugging Face Hub (needs `hf auth login` and HF_VERSION)
 	@test -n "$(HF_VERSION)" || (echo "set HF_VERSION (or HF_SNAPSHOT) to tag the release" && exit 1)
-	hf upload "$(HF_REPO_ID)" "$(HF_OUTPUT)" . --repo-type dataset --commit-message "Release $(HF_VERSION)"
-	hf repo tag create "$(HF_REPO_ID)" "$(HF_VERSION)" --repo-type dataset
+	$(HF) upload "$(HF_REPO_ID)" "$(HF_OUTPUT)" . --repo-type dataset --commit-message "Release $(HF_VERSION)"
+	$(HF) repos tag create "$(HF_REPO_ID)" "$(HF_VERSION)" --repo-type dataset
 
 .PHONY: neo4j-up
 neo4j-up: ## Start Neo4j with stage/ mounted as /import
