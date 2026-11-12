@@ -1,7 +1,7 @@
 [project]
 name = "kaggle-knowledge-graph"
 version = "0.1.0"
-description = "The Python environment for the `kaggle-knowledge-graph` project"
+description = "The Python environment for the Kaggle knowledge graph project"
 requires-python = ">=3.10,<4.0"
 dependencies = [
     "duckdb>=1.5.4",
