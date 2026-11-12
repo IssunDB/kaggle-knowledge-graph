@@ -27,7 +27,7 @@
           default = pkgs.mkShell {
             packages = with pkgs;
               [
-                python315
+                python314
                 uv
                 gnumake
                 git
@@ -42,11 +42,11 @@
                 export LD_LIBRARY_PATH="${pkgs.lib.makeLibraryPath linuxRuntimeLibs}:''${LD_LIBRARY_PATH:-}"
               ''
               + ''
-                export UV_PYTHON="${pkgs.python3}/bin/python3"
+                export UV_PYTHON="${pkgs.python314}/bin/python3"
                 export PATH="$PWD/bin:$PATH"
 
                 echo "Kaggle Knowledge Graph dev shell"
-                echo "Python: $(${pkgs.python3}/bin/python3 --version)"
+                echo "Python: $(${pkgs.python314}/bin/python3 --version)"
                 echo "uv: $(${pkgs.uv}/bin/uv --version)"
                 echo ""
                 echo "Common commands:"
