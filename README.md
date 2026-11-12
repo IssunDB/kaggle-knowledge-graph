@@ -1,4 +1,4 @@
-# Kaggle Knowledge Graph
+## Kaggle Knowledge Graph
 
 [![Tests](https://img.shields.io/github/actions/workflow/status/IssunDB/kaggle-knowledge-graph/tests.yml?label=tests&style=flat&labelColor=333333&logo=github&logoColor=white)](https://github.com/IssunDB/kaggle-knowledge-graph/actions/workflows/tests.yml)
 [![Code Coverage](https://img.shields.io/codecov/c/github/IssunDB/kaggle-knowledge-graph?style=flat&label=coverage&labelColor=333333&logo=codecov&logoColor=white)](https://codecov.io/gh/IssunDB/kaggle-knowledge-graph)
@@ -11,47 +11,59 @@
 This repository contains code for building a knowledge graph from the [Meta Kaggle](https://www.kaggle.com/datasets/kaggle/meta-kaggle) dataset
 and loading it into [IssunDB](https://github.com/IssunDB/issun-db/releases), which provides CLI and MCP interfaces for querying the data.
 
-## Quickstart
+### Quickstart
 
-### Data
+The easiest way to get started is to follow the steps below, you need to have Git and [Nix](https://nixos.org/download/) (with flakes enabled)
+installed on your machine.
+
+##### 0. Set up the development environment
+
+```bash
+nix develop
+```
+
+#### Data
 
 The pipeline needs the Meta Kaggle tabular dataset, and it can (optionally) include the Meta Kaggle Code dataset.
 
-#### 1. Download Meta Kaggle Dataset
+##### 1. Download Meta Kaggle dataset
 
 ```bash
 curl -L -o /path/to/meta-kaggle.zip \
   https://www.kaggle.com/api/v1/datasets/download/kaggle/meta-kaggle
 ```
 
-#### 2. Extract Meta Kaggle Dataset
+##### 2. Extract Meta Kaggle dataset
 
 ```bash
 unzip /path/to/meta-kaggle.zip -d /path/to/meta-kaggle
 ```
 
-#### 3. Download and Extract Meta Kaggle Code (Optional)
+##### 3. Download and extract Meta Kaggle Code dataset (Optional)
 
 ```bash
 curl -L -o /path/to/meta-kaggle-code.zip \
   https://www.kaggle.com/api/v1/datasets/download/kaggle/meta-kaggle-code
-  
+
 unzip /path/to/meta-kaggle-code.zip -d /path/to/meta-kaggle-code
 ```
 
-#### 4. Configure Environment Variables
+> [!WARNING]
+> The Meta Kaggle Code dataset is large (over 200GB compressed).
+
+##### 4. Configure environment variables
 
 ```bash
 export META_KAGGLE_DIR="/path/to/meta-kaggle"
 
-# This is optional. Set only if Meta Kaggle Code was downloaded
+# This is optional; set only if Meta Kaggle Code was downloaded
 export META_KAGGLE_CODE_DIR="/path/to/meta-kaggle-code"
 ```
 
 > [!NOTE]
 > Remember to replace the correct paths in the commands above.
 
-### Build and Launch
+#### Build and Launch
 
 Build the Kaggle knowledge graph and launch the CLI or MCP server:
 
@@ -63,7 +75,7 @@ Build the Kaggle knowledge graph and launch the CLI or MCP server:
 - `make kernel-mcp` runs the IssunDB MCP server for the kernel knowledge graph.
 - `make help` shows all available Makefile targets.
 
-### Publish the Graph as a Hugging Face Dataset
+#### Publish the Graph as a Hugging Face Dataset
 
 The published dataset is available on Hugging Face at [habedi/kaggle-knowledge-graph](https://huggingface.co/datasets/habedi/kaggle-knowledge-graph).
 
@@ -72,7 +84,7 @@ The published dataset is available on Hugging Face at [habedi/kaggle-knowledge-g
 - `make hf-upload HF_REPO_ID=<user>/<dataset> HF_VERSION=<version>` uploads that directory to the Hugging Face Hub and tags it with the release
   version (log in first with `hf auth login`).
 
-### MCP Server Configuration
+#### MCP Server Configuration
 
 To connect AI agents to the IssunDB MCP server, use the configuration template at [examples/mcp_config.json](examples/mcp_config.json):
 
@@ -92,7 +104,7 @@ To connect AI agents to the IssunDB MCP server, use the configuration template a
 }
 ```
 
-### Knowledge Graph Schema
+#### Knowledge Graph Schema
 
 <div align="center">
   <picture>
@@ -102,11 +114,11 @@ To connect AI agents to the IssunDB MCP server, use the configuration template a
 
 ---
 
-## Contributing
+### Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for details on how to make a contribution.
 
-## License
+### License
 
 This project is licensed under the [MIT License](LICENSE) except for the knowledge graph data (built by the code in this repository), which
 is subject to the [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/) license.

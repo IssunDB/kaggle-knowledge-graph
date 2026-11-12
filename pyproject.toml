@@ -1,7 +1,7 @@
 [project]
 name = "kaggle-knowledge-graph"
 version = "0.1.0"
-description = "The Python environment for the `kaggle-knowledge-graph` project"
+description = "The Python environment for the Kaggle knowledge graph project"
 requires-python = ">=3.10,<4.0"
 dependencies = [
     "duckdb>=1.5.4",
@@ -15,21 +15,21 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
-    "pytest >=8.0.1",
-    "pytest-cov >=6.0.0",
-    "pytest-mock >=3.14.0",
-    "pytest-asyncio >=1.1.0",
-    "mypy >=1.11.1",
-    "ruff >=0.9.3",
-    "pre-commit >=4.2.0",
-    "icecream >=2.1.4",
-    "mkdocs >=1.6.1",
-    "mkdocs-material >=9.6.12",
-    "mkdocstrings-python >=1.16.10",
-    "pyyaml >=6.0.1",
-    "rundoc >=0.2.3",
-    "hypothesis >=6.150.2",
-    "griffe >=1.7.3",
+    "pytest>=8.0.1",
+    "pytest-cov>=6.0.0",
+    "pytest-mock>=3.14.0",
+    "pytest-asyncio>=1.1.0",
+    "mypy>=1.11.1",
+    "ruff>=0.9.3",
+    "pre-commit>=4.2.0",
+    "icecream>=2.1.4",
+    "mkdocs>=1.6.1",
+    "mkdocs-material>=9.6.12",
+    "mkdocstrings-python>=1.16.10",
+    "pyyaml>=6.0.1",
+    "rundoc>=0.2.3",
+    "hypothesis>=6.150.2",
+    "griffe>=1.7.3",
 ]
 
 [tool.pytest.ini_options]
