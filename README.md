@@ -17,20 +17,20 @@ and loading it into [IssunDB](https://github.com/IssunDB/issun-db/releases), whi
 
 The pipeline needs the Meta Kaggle tabular dataset, and it can (optionally) include the Meta Kaggle Code dataset.
 
-##### 1. Download Meta Kaggle Dataset
+##### 1. Download Meta Kaggle dataset
 
 ```bash
 curl -L -o /path/to/meta-kaggle.zip \
   https://www.kaggle.com/api/v1/datasets/download/kaggle/meta-kaggle
 ```
 
-##### 2. Extract Meta Kaggle Dataset
+##### 2. Extract Meta Kaggle dataset
 
 ```bash
 unzip /path/to/meta-kaggle.zip -d /path/to/meta-kaggle
 ```
 
-##### 3. Download and Extract Meta Kaggle Code (Optional)
+##### 3. Download and extract Meta Kaggle Code dataset (Optional)
 
 ```bash
 curl -L -o /path/to/meta-kaggle-code.zip \
@@ -39,12 +39,16 @@ curl -L -o /path/to/meta-kaggle-code.zip \
 unzip /path/to/meta-kaggle-code.zip -d /path/to/meta-kaggle-code
 ```
 
-##### 4. Configure Environment Variables
+> [!WARNING]
+> The Meta Kaggle Code dataset is large (over 200GB compressed).
+> Sorry, it may take a long time to download and extract.
+
+##### 4. Configure environment variables
 
 ```bash
 export META_KAGGLE_DIR="/path/to/meta-kaggle"
 
-# This is optional. Set only if Meta Kaggle Code was downloaded
+# This is optional; set only if Meta Kaggle Code was downloaded
 export META_KAGGLE_CODE_DIR="/path/to/meta-kaggle-code"
 ```
 
