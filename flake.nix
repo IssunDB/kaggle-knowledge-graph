@@ -34,6 +34,7 @@
                 pre-commit
                 duckdb
                 pkg-config
+                curl
               ]
               ++ pkgs.lib.optionals pkgs.stdenv.hostPlatform.isLinux linuxRuntimeLibs;
 

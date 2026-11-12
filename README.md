@@ -13,6 +13,15 @@ and loading it into [IssunDB](https://github.com/IssunDB/issun-db/releases), whi
 
 ### Quickstart
 
+The easiest way to get started is to follow the steps below, you need to have Git and [Nix](https://nixos.org/download/) (with flakes enabled)
+installed on your machine.
+
+##### 0. Set up the development environment
+
+```bash
+nix develop
+```
+
 #### Data
 
 The pipeline needs the Meta Kaggle tabular dataset, and it can (optionally) include the Meta Kaggle Code dataset.
