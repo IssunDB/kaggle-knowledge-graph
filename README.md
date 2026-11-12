@@ -41,7 +41,6 @@ unzip /path/to/meta-kaggle-code.zip -d /path/to/meta-kaggle-code
 
 > [!WARNING]
 > The Meta Kaggle Code dataset is large (over 200GB compressed).
-> Sorry, it may take a long time to download and extract.
 
 ##### 4. Configure environment variables
 
