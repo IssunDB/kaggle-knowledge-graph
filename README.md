@@ -24,8 +24,6 @@ nix develop
 
 #### Data
 
-The pipeline needs the Meta Kaggle tabular dataset, and it can (optionally) include the Meta Kaggle Code dataset.
-
 ##### 1. Download Meta Kaggle dataset
 
 ```bash
